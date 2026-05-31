@@ -11,34 +11,34 @@ Musync features an interactive CLI that gives you total control of your playback
 - **Auto Dependency Management:** A smart setup wizard automatically installs `yt-dlp` and `ffmpeg` so you don't have to configure anything manually!
 - **Interactive Playback UI:** Lists all your tracks and displays an accurate real-time progress bar synced to the audio engine.
 - **Command Mode (Jump & Search):** Press `/` during playback to instantly jump to another track number or type a custom song name to play it mid-playlist.
-- **Keyboard Controls:** Control the stream using native terminal keystrokes:
-  - `[Space] / s` : Pause and Resume
-  - `[n] / Right Arrow` : Skip to Next Track
-  - `[p] / Left Arrow` : Go back to Previous Track
-  - `[r]` : Reshuffle the remaining playlist
-  - `[/]` : Enter Command Mode (Jump to track / Play custom song)
-  - `[q] / Ctrl+C` : Quit Musync
+- **Standalone Binaries:** Download a single executable file and run it. No Node.js, `npm`, or `npm install` required!
 
-## Setup & Installation 🚀
+## Installation & Setup 🚀
 
-1. **Clone the repository and install dependencies:**
-   ```bash
-   git clone <repo-url>
-   cd musync
-   npm install
-   ```
+### Method 1: Download Standalone Executable (Recommended)
+You do not need Node.js installed. Just download the pre-compiled binary for your operating system (Mac, Windows, or Linux) from the Releases page and run it:
+```bash
+./musync
+```
+*(When you run it for the first time, the built-in wizard will automatically download `ffmpeg` and `yt-dlp` for you).*
 
-2. **Link the CLI locally:**
-   ```bash
-   npm link
-   ```
-   *This allows you to run the `musync` command from anywhere in your terminal.*
+### Method 2: Install via Source (For Developers)
+Ensure you have Node.js (v18+) installed.
+```bash
+git clone <repo-url>
+cd musync
+npm install
+npm link
+musync
+```
 
-3. **Run for the first time:**
-   ```bash
-   musync
-   ```
-   *Musync will launch an automated setup wizard. It will check for `ffmpeg` and `yt-dlp` and install them if missing. It will also ask if you want to set up your Spotify credentials or if you just want to use the public URL mode.*
+## Building Standalone Binaries (For Contributors)
+We use [Bun](https://bun.sh) to compile this Node application into a standalone executable.
+To compile the binaries for Mac, Windows, and Linux yourself, run:
+```bash
+npm run build:all
+```
+This will place the executable files inside the `dist/` folder.
 
 ## Usage 🎶
 

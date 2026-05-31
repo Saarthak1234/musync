@@ -1,0 +1,5 @@
+website/
+.env
+.env.backup
+spotify_test.html
+spotify_script.txt
