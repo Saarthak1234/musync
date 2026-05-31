@@ -1,0 +1,59 @@
+import Conf from 'conf'
+
+const config = new Conf({
+  projectName: 'musync',
+  schema: {
+    accessToken:    { type: 'string', default: '' },
+    refreshToken:   { type: 'string', default: '' },
+    tokenExpiry:    { type: 'number', default: 0  },
+    setupComplete:  { type: 'boolean', default: false },
+    spotifyUserId:  { type: 'string', default: '' },
+    displayName:    { type: 'string', default: '' },
+  }
+})
+
+export function getTokens() {
+  return {
+    accessToken:  config.get('accessToken'),
+    refreshToken: config.get('refreshToken'),
+    tokenExpiry:  config.get('tokenExpiry'),
+  }
+}
+
+export function saveTokens({ accessToken, refreshToken, expiresIn }) {
+  config.set('accessToken',  accessToken)
+  config.set('refreshToken', refreshToken)
+  config.set('tokenExpiry',  Date.now() + expiresIn * 1000)
+}
+
+export function saveUserInfo({ id, displayName }) {
+  config.set('spotifyUserId', id)
+  config.set('displayName',   displayName)
+}
+
+export function getUserInfo() {
+  return {
+    id:          config.get('spotifyUserId'),
+    displayName: config.get('displayName'),
+  }
+}
+
+export function isTokenExpired() {
+  return Date.now() > config.get('tokenExpiry')
+}
+
+export function isLoggedIn() {
+  return !!config.get('accessToken')
+}
+
+export function isSetupComplete() {
+  return config.get('setupComplete')
+}
+
+export function markSetupComplete() {
+  config.set('setupComplete', true)
+}
+
+export function clearAll() {
+  config.clear()
+}

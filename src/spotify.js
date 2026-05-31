@@ -1,0 +1,325 @@
+import chalk from 'chalk'
+import ora from 'ora'
+import inquirer from 'inquirer'
+import readline from 'readline'
+import { getAuthenticatedClient } from './auth.js'
+import { searchAndPlay } from './youtube.js'
+import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
+
+import spotifyUrlInfo from 'spotify-url-info'
+const { getTracks } = spotifyUrlInfo(fetch)
+
+async function fetchSpotifyAPI(spotify, endpoint) {
+  const token = spotify.getAccessToken()
+  const res = await fetch(`https://api.spotify.com${endpoint}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    throw new Error(errData.error?.message || res.statusText)
+  }
+  return res.json()
+}
+
+export async function listCommand() {
+  const spotify = await getAuthenticatedClient()
+  const spinner = ora('  Fetching your playlists...').start()
+
+  try {
+    // Fetch directly from Spotify Web API instead of deprecated library methods
+    const data = await fetchSpotifyAPI(spotify, '/v1/me/playlists?limit=50')
+    spinner.stop()
+
+    const playlists = data.items
+    if (!playlists.length) {
+      console.log(chalk.yellow('\n  No playlists found.\n'))
+      return
+    }
+
+    console.log(chalk.bold('\n  🎵 Your Playlists:\n'))
+    playlists.forEach((pl, i) => {
+      // The Spotify API has renamed 'tracks' to 'items' on the playlist object
+      const trackInfo = pl.items || pl.tracks
+      const count = trackInfo?.total !== undefined ? trackInfo.total : '?'
+      console.log(
+        chalk.gray(`  ${String(i + 1).padStart(2, ' ')}.`) +
+        chalk.white(` ${pl.name}`) +
+        chalk.gray(` (${count} tracks)`)
+      )
+    })
+    console.log()
+  } catch (err) {
+    spinner.fail(chalk.red(`  Failed: ${err.message}\n`))
+  }
+}
+
+export async function playCommand(playlistInput, options) {
+  let tracks = []
+  const spinner = ora('  Fetching tracks...').start()
+
+  try {
+    const urlMatch = playlistInput.match(/playlist\/([a-zA-Z0-9]+)/)
+    
+    if (urlMatch || playlistInput.startsWith('http')) {
+      // No login required for public URLs! Scrape directly.
+      const rawTracks = await getTracks(playlistInput)
+      tracks = rawTracks.map(t => ({
+        name: t.name,
+        artist: t.artists?.[0]?.name || t.artist || 'Unknown',
+        album: t.album?.name || ''
+      }))
+    } else {
+      // Require login to search personal playlists by name
+      spinner.stop()
+      const spotify = await getAuthenticatedClient()
+      spinner.start()
+      
+      const playlistId = await findPlaylistByName(spotify, playlistInput)
+      if (!playlistId) {
+        spinner.stop()
+        return
+      }
+      tracks = await getAllTracks(spotify, playlistId)
+    }
+
+    spinner.succeed(chalk.green(`  Found ${tracks.length} tracks`))
+
+    if (!tracks.length) {
+      console.log(chalk.yellow('\n  Playlist is empty.\n'))
+      return
+    }
+
+    let queue = tracks
+    let currentIndex = 0
+
+    if (!options.shuffle) {
+      console.log(chalk.bold(`\n  🎵 Playlist Tracks:\n`))
+      tracks.forEach((t, i) => {
+        console.log(chalk.gray(`  ${String(i + 1).padStart(3, ' ')}. `) + chalk.white(t.name) + chalk.gray(` — ${t.artist}`))
+      })
+      console.log()
+
+      const { action } = await inquirer.prompt([{
+        type: 'input',
+        name: 'action',
+        message: 'Enter track number to play, "shuffle", or press Enter for normal play:',
+        default: 'play'
+      }])
+
+      const val = action.trim().toLowerCase()
+      if (val === 'shuffle' || val === 's') {
+        queue = shuffleArray([...tracks])
+      } else if (val !== 'play' && val !== 'p' && val !== '') {
+        const num = parseInt(val, 10)
+        if (!isNaN(num) && num > 0 && num <= tracks.length) {
+          currentIndex = num - 1
+        } else {
+          console.log(chalk.yellow('  Invalid input, starting from the beginning.\n'))
+        }
+      }
+    } else {
+      queue = shuffleArray([...tracks])
+    }
+
+    let isPaused = false
+    let isQuit = false
+    let nextCustomQuery = null // To hold a custom search query
+
+    const setupInput = () => {
+      readline.emitKeypressEvents(process.stdin)
+      if (process.stdin.isTTY) process.stdin.setRawMode(true)
+      process.stdin.resume()
+      process.stdin.on('keypress', handleInput)
+    }
+
+    const teardownInput = () => {
+      process.stdin.off('keypress', handleInput)
+      if (process.stdin.isTTY) process.stdin.setRawMode(false)
+      process.stdin.pause()
+    }
+
+    const handleInput = async (str, key) => {
+      if ((key.ctrl && key.name === 'c') || key.name === 'q') {
+        stopCurrentStream()
+        process.exit(0)
+      } else if (key.name === 'n' || key.name === 'right') {
+        stopCurrentStream() // Resolves current stream, loop advances
+      } else if (key.name === 'p' || key.name === 'left') {
+        // -2 because the loop will increment currentIndex by 1 right after this
+        currentIndex = Math.max(-1, currentIndex - 2) 
+        stopCurrentStream()
+      } else if (key.name === 's' || key.name === 'space') {
+        if (isPaused) {
+          resumeCurrentStream()
+          isPaused = false
+        } else {
+          pauseCurrentStream()
+          isPaused = true
+        }
+      } else if (key.name === 'r') {
+        queue = shuffleArray([...tracks])
+        currentIndex = -1 // Will start at 0
+        stopCurrentStream()
+      } else if (str === '/' || key.name === '/') {
+        // Command mode!
+        teardownInput()
+        import('./player.js').then(player => player.suspendProgressBar())
+        console.log('\n') // move below progress bar
+
+        const { command } = await inquirer.prompt([{
+          type: 'input',
+          name: 'command',
+          message: 'Enter track number to jump to, or type a song name to play next:'
+        }])
+
+        const val = command.trim()
+        const num = parseInt(val, 10)
+
+        if (!isNaN(num) && num > 0 && num <= tracks.length) {
+          // Jump to track number (always based on original playlist indexing)
+          const targetTrack = tracks[num - 1]
+          const targetIndex = queue.indexOf(targetTrack)
+          currentIndex = targetIndex - 1 // -1 because loop increments by 1
+          stopCurrentStream()
+        } else if (val.length > 0) {
+          // Play custom song next
+          nextCustomQuery = val
+          stopCurrentStream() // Skip current to play the custom song
+        }
+
+        import('./player.js').then(player => player.resumeProgressBar())
+        setupInput()
+      }
+    }
+
+    setupInput()
+
+    console.log(chalk.bold('\n  🎵 Starting playlist...\n'))
+    console.log(chalk.gray('  Controls:'))
+    console.log(chalk.gray('  [Space] Pause/Resume  [n/Right] Next  [p/Left] Prev  [r] Shuffle  [/] Search/Jump  [q/Ctrl+C] Quit\n'))
+
+    for (; currentIndex < queue.length; currentIndex++) {
+      if (isQuit) break
+      
+      let query
+      if (nextCustomQuery) {
+        query = nextCustomQuery
+        console.log(
+          chalk.gray(`  [Custom Search]`) +
+          chalk.cyan(` ${query}`)
+        )
+        // do not advance the playlist index so we resume where we left off after this custom song
+        currentIndex-- 
+        nextCustomQuery = null
+      } else {
+        const track = queue[currentIndex]
+        const originalNumber = tracks.indexOf(track) + 1
+        query = `${track.name} ${track.artist} official audio`
+        console.log(
+          chalk.gray(`  [${originalNumber}/${queue.length}]`) +
+          chalk.cyan(` ${track.name}`) +
+          chalk.gray(` — ${track.artist}`)
+        )
+      }
+
+      // Re-enforce raw mode before every track in case a child process resets the terminal TTY
+      if (process.stdin.isTTY) process.stdin.setRawMode(true)
+      process.stdin.resume()
+
+      isPaused = false
+      await searchAndPlay(query)
+    }
+
+    teardownInput()
+
+    if (!isQuit) console.log(chalk.green('\n  ✅ Playlist finished!\n'))
+  } catch (err) {
+    spinner.fail(chalk.red(`  Error: ${err.message}\n`))
+  }
+}
+
+async function findPlaylistByName(spotify, name) {
+  const spinner = ora('  Searching playlists...').start()
+
+  try {
+    // Fetch directly from Spotify Web API instead of deprecated library methods
+    const data = await fetchSpotifyAPI(spotify, '/v1/me/playlists?limit=50')
+    spinner.stop()
+
+    const playlists = data.items
+    const matches   = playlists.filter(pl =>
+      pl.name.toLowerCase().includes(name.toLowerCase())
+    )
+
+    if (!matches.length) {
+      console.log(chalk.red(`\n  No playlist found matching "${name}"\n`))
+      console.log(chalk.gray('  Run "musync list" to see all your playlists.\n'))
+      return null
+    }
+
+    if (matches.length === 1) return matches[0].id
+
+    // multiple matches — let user pick
+    const { chosen } = await inquirer.prompt([{
+      type:    'list',
+      name:    'chosen',
+      message: 'Multiple playlists found. Which one?',
+      choices: matches.map(pl => ({ name: pl.name, value: pl.id })),
+    }])
+
+    return chosen
+  } catch (err) {
+    spinner.fail(chalk.red(`  Failed: ${err.message}`))
+    return null
+  }
+}
+
+async function getAllTracks(spotify, playlistId) {
+  const tracks = []
+  let offset   = 0
+  const limit  = 100 // Maximum allowed by Spotify API per request
+
+  while (true) {
+    // Fetch a single chunk of up to 100 tracks using the new /items endpoint
+    // Spotify API now uses 'item' instead of 'track' inside the items array
+    const fields = encodeURIComponent('items(item(name,artists,album,is_local)),next,total')
+    const url = `/v1/playlists/${playlistId}/items?limit=${limit}&offset=${offset}&fields=${fields}`
+    const data = await fetchSpotifyAPI(spotify, url)
+
+    const items = data.items
+    const total = data.total
+
+    if (!items || items.length === 0) break
+
+    // Process and push current chunk into master array
+    for (const obj of items) {
+      const trackObj = obj.item || obj.track
+      if (!trackObj || trackObj.is_local || !trackObj.name) continue
+      
+      tracks.push({
+        name:   trackObj.name,
+        artist: trackObj.artists?.[0]?.name ?? 'Unknown',
+        album:  trackObj.album?.name ?? '',
+      })
+    }
+
+    // Break conditions: Either we've accumulated everything up to the reported 'total',
+    // or the API returned a smaller chunk than requested, meaning we hit the end.
+    if (tracks.length >= total || items.length < limit) {
+      break
+    }
+    
+    // Increment the offset to catch the next chunk on the next iteration loop
+    offset += limit
+  }
+
+  return tracks
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
