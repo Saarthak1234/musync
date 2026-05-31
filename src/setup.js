@@ -119,6 +119,31 @@ export async function checkFirstRun() {
   if (isSetupComplete()) return
 
   console.log(chalk.bold.green('\n  🎵 Welcome to Musync!\n'))
+
+  // Self-installer feature for standalone binaries on Mac/Linux
+  const isStandalone = !process.execPath.endsWith('node') && !process.execPath.endsWith('node.exe')
+  const isGlobal = process.execPath.includes('/bin/') || process.execPath.includes('/opt/homebrew') || process.execPath.includes('\\AppData\\')
+  
+  if (isStandalone && !isGlobal && OS !== 'win32') {
+    const { installGlobal } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'installGlobal',
+      message: 'Would you like to install musync globally so you can run it from anywhere by just typing "musync"?',
+      default: true
+    }])
+    
+    if (installGlobal) {
+      try {
+        console.log(chalk.gray('  Moving binary to /usr/local/bin/musync... (May ask for password)'))
+        execSync(`sudo mv "${process.execPath}" /usr/local/bin/musync`, { stdio: 'inherit' })
+        console.log(chalk.green('\n  ✅ Installed successfully! Please run "musync" from your terminal to start.\n'))
+        process.exit(0)
+      } catch (e) {
+        console.log(chalk.red('\n  ❌ Failed to install globally. Continuing locally...\n'))
+      }
+    }
+  }
+
   console.log(chalk.gray('  Checking for required dependencies...\n'))
 
   const missing = []
