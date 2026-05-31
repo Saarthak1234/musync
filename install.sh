@@ -13,7 +13,7 @@ OS="$(uname -s)"
 ARCH="$(uname -m)"
 
 BINARY_URL=""
-REPO="saarthakagarwal0408/musync"
+REPO="Saarthak1234/musync"
 # We will use the 'latest' release tag from GitHub API
 TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 

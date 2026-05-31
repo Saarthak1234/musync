@@ -18,12 +18,12 @@ Musync features an interactive CLI that gives you total control of your playback
 ### Method 1: The One-Line Installer (Mac & Linux)
 The easiest way to install Musync globally so you can run it from anywhere. Open your terminal and paste this command:
 ```bash
-curl -sL https://raw.githubusercontent.com/saarthakagarwal0408/musync/main/install.sh | bash
+curl -sL https://raw.githubusercontent.com/Saarthak1234/musync/main/install.sh | bash
 ```
 *(You may be prompted for your password to install it globally).*
 
 ### Method 2: Manual Download (Windows)
-1. Go to the [Releases](https://github.com/saarthakagarwal0408/musync/releases) page.
+1. Go to the [Releases](https://github.com/Saarthak1234/musync/releases) page.
 2. Download `musync-windows.exe`.
 3. Open it! (You can also rename it to `musync.exe` and add it to your Windows Environment Variables Path to run it globally from command prompt).
 
