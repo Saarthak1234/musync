@@ -57,7 +57,7 @@ import readline from 'readline'
 import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
 
 export async function searchCommand(query) {
-  console.log(chalk.bold(`\n  🔍 Searching: ${query}\n`))
+  console.log(chalk.bold(`\n  Searching: ${query}\n`))
 
   let isPaused = false
   readline.emitKeypressEvents(process.stdin)

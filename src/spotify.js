@@ -36,7 +36,7 @@ export async function listCommand() {
       return
     }
 
-    console.log(chalk.bold('\n  🎵 Your Playlists:\n'))
+    console.log(chalk.bold('\n  Your Playlists:\n'))
     playlists.forEach((pl, i) => {
       // The Spotify API has renamed 'tracks' to 'items' on the playlist object
       const trackInfo = pl.items || pl.tracks
@@ -84,7 +84,7 @@ export async function playCommand(playlistInput, options) {
 
     spinner.succeed(chalk.green(`  Found ${tracks.length} tracks`))
     if ((urlMatch || playlistInput.startsWith('http')) && tracks.length === 100) {
-      console.log(chalk.yellow('\n  ⚠️  Notice: Spotify limits public URL previews to 100 tracks.'))
+      console.log(chalk.yellow('\n  [Warning] Notice: Spotify limits public URL previews to 100 tracks.'))
       console.log(chalk.yellow('  To play the rest of this playlist, you must connect your account by running: ') + chalk.bold.cyan('musync auth\n'))
     }
 
@@ -97,7 +97,7 @@ export async function playCommand(playlistInput, options) {
     let currentIndex = 0
 
     if (!options.shuffle) {
-      console.log(chalk.bold(`\n  🎵 Playlist Tracks:\n`))
+      console.log(chalk.bold(`\n  Playlist Tracks:\n`))
       tracks.forEach((t, i) => {
         console.log(chalk.gray(`  ${String(i + 1).padStart(3, ' ')}. `) + chalk.white(t.name) + chalk.gray(` — ${t.artist}`))
       })
@@ -198,7 +198,7 @@ export async function playCommand(playlistInput, options) {
 
     setupInput()
 
-    console.log(chalk.bold('\n  🎵 Starting playlist...\n'))
+    console.log(chalk.bold('\n  Starting playlist...\n'))
     console.log(chalk.gray('  Controls:'))
     console.log(chalk.gray('  [Space] Pause/Resume  [n/Right] Next  [p/Left] Prev  [r] Shuffle  [/] Search/Jump  [q/Ctrl+C] Quit\n'))
 
@@ -236,7 +236,7 @@ export async function playCommand(playlistInput, options) {
 
     teardownInput()
 
-    if (!isQuit) console.log(chalk.green('\n  ✅ Playlist finished!\n'))
+    if (!isQuit) console.log(chalk.green('\n  [Success] Playlist finished!\n'))
   } catch (err) {
     spinner.fail(chalk.red(`  Error: ${err.message}\n`))
   }

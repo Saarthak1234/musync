@@ -12,7 +12,7 @@ await checkFirstRun()
 
 program
   .name('musync')
-  .description(chalk.green('🎵 Stream your Spotify playlists for free'))
+  .description(chalk.green('Stream your Spotify playlists for free'))
   .version('1.0.0')
 
 program

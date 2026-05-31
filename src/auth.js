@@ -34,7 +34,7 @@ export function getSpotifyClient() {
 export async function authCommand() {
   if (isLoggedIn()) {
     const { displayName } = getUserInfo()
-    console.log(chalk.green(`\n  ✅ Already logged in as ${chalk.bold(displayName)}`))
+    console.log(chalk.green(`\n  [Success] Already logged in as ${chalk.bold(displayName)}`))
     console.log(chalk.gray('  Run "musync logout" to switch accounts.\n'))
     return
   }
@@ -80,7 +80,7 @@ export async function authCommand() {
     const me = await spotify.getMe()
     saveUserInfo({ id: me.body.id, displayName: me.body.display_name })
 
-    spinner.succeed(chalk.green(`  Logged in as ${chalk.bold(me.body.display_name)} ✅\n`))
+    spinner.succeed(chalk.green(`  Logged in as ${chalk.bold(me.body.display_name)} [Success]\n`))
   } catch (err) {
     spinner.fail(chalk.red(`  Auth failed: ${err.message}\n`))
   }
@@ -96,7 +96,7 @@ function waitForCallback() {
         res.writeHead(200, { 'Content-Type': 'text/html' })
         res.end(`
           <html><body style="font-family:sans-serif;text-align:center;padding:60px">
-            <h2>✅ Musync logged in!</h2>
+            <h2>Musync logged in successfully!</h2>
             <p>You can close this tab and go back to your terminal.</p>
           </body></html>
         `)
@@ -123,12 +123,12 @@ function waitForCallback() {
 
 export async function logoutCommand() {
   clearAll()
-  console.log(chalk.green('\n  ✅ Logged out successfully.\n'))
+  console.log(chalk.green('\n  [Success] Logged out successfully.\n'))
 }
 
 export async function getAuthenticatedClient() {
   if (!isLoggedIn()) {
-    console.log(chalk.red('\n  ❌ Not logged in. Run: musync auth\n'))
+    console.log(chalk.red('\n  [Error] Not logged in. Run: musync auth\n'))
     process.exit(1)
   }
 

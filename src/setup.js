@@ -121,7 +121,7 @@ export async function checkFirstRun() {
   const isGlobal = process.execPath.includes('/bin/') || process.execPath.includes('/opt/homebrew') || process.execPath.includes('\\AppData\\')
   
   if (isStandalone && !isGlobal && OS !== 'win32') {
-    console.log(chalk.bold.green('\n  🎵 Welcome to Musync!\n'))
+    console.log(chalk.bold.green('\n  Welcome to Musync!\n'))
     const { installGlobal } = await inquirer.prompt([{
       type: 'confirm',
       name: 'installGlobal',
@@ -133,10 +133,10 @@ export async function checkFirstRun() {
       try {
         console.log(chalk.gray('  Moving binary to /usr/local/bin/musync... (May ask for password)'))
         execSync(`sudo mv "${process.execPath}" /usr/local/bin/musync`, { stdio: 'inherit' })
-        console.log(chalk.green('\n  ✅ Installed successfully! Please run "musync" from your terminal to start.\n'))
+        console.log(chalk.green('\n  [Success] Installed successfully! Please run "musync" from your terminal to start.\n'))
         process.exit(0)
       } catch (e) {
-        console.log(chalk.red('\n  ❌ Failed to install globally. Continuing locally...\n'))
+        console.log(chalk.red('\n  [Error] Failed to install globally. Continuing locally...\n'))
       }
     }
   }
@@ -144,7 +144,7 @@ export async function checkFirstRun() {
   if (isSetupComplete()) return
 
   if (!isStandalone || isGlobal || OS === 'win32') {
-    console.log(chalk.bold.green('\n  🎵 Welcome to Musync!\n'))
+    console.log(chalk.bold.green('\n  Welcome to Musync!\n'))
   }
   
   console.log(chalk.gray('  Checking for required dependencies...\n'))
@@ -154,7 +154,7 @@ export async function checkFirstRun() {
   if (!isInstalled('ffplay') && !isInstalled('ffmpeg')) missing.push('ffmpeg')
 
   if (missing.length === 0) {
-    console.log(chalk.green('  ✅ All dependencies found!\n'))
+    console.log(chalk.green('  [Success] All dependencies found!\n'))
     markSetupComplete()
     return
   }
@@ -204,7 +204,7 @@ async function checkSpotifyCredentials() {
     // env doesn't exist
   }
 
-  console.log(chalk.bold.cyan('\n  🎧 Optional: Connect your Spotify Account\n'));
+  console.log(chalk.bold.cyan('\n  Optional: Connect your Spotify Account\n'));
   console.log(chalk.white('  If you connect Spotify, you can browse and play your private playlists.'));
   console.log(chalk.white('  If you skip this, you can still play public playlist URLs directly! (e.g. musync play <url>)\n'));
 
@@ -216,7 +216,7 @@ async function checkSpotifyCredentials() {
   }]);
 
   if (!wantAuth) {
-    console.log(chalk.green('\n  ✅ Skipped Spotify login. You can still use: musync play <playlist_url>\n'));
+    console.log(chalk.green('\n  [Success] Skipped Spotify login. You can still use: musync play <playlist_url>\n'));
     return;
   }
 
@@ -250,5 +250,5 @@ async function checkSpotifyCredentials() {
   try { existingEnv = fs.readFileSync(envPath, 'utf8') + '\n'; } catch (e) {}
   
   fs.writeFileSync(envPath, existingEnv + envData);
-  console.log(chalk.green('\n  ✅ Credentials saved to .env!\n'));
+  console.log(chalk.green('\n  [Success] Credentials saved to .env!\n'));
 }
