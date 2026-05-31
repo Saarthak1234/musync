@@ -3,21 +3,30 @@ const YTDlpWrap = YTDlpWrapModule.default || YTDlpWrapModule
 import chalk from 'chalk'
 import ora from 'ora'
 import { playStream } from './player.js'
+import { tui } from './tui.js'
 
 const ytDlp = new YTDlpWrap()
 
-export async function searchAndPlay(query) {
-  const spinner = ora('  Finding on YouTube...').start()
+export async function searchAndPlay(query, isStandalone = false) {
+  let spinner;
+  if (!isStandalone) {
+    // Playlist mode: just set title
+    tui.updateState({ title: 'Searching YouTube...', artist: '' })
+    tui.render()
+  } else {
+    // Single search mode: use standard CLI spinner
+    spinner = ora('  Finding on YouTube...').start()
+  }
+
   const searchQuery = `${query} lyric video`
 
   try {
-    // search YouTube and get the best audio stream URL
     const output = await ytDlp.execPromise([
-      `ytsearch1:${searchQuery}`,   // top 1 result
-      '--get-url',            // just print the stream URL
-      '--get-title',          // and the title
-      '--get-duration',       // and the duration
-      '-f', 'bestaudio/best', // audio only, best quality
+      `ytsearch1:${searchQuery}`,   
+      '--get-url',            
+      '--get-title',          
+      '--get-duration',       
+      '-f', 'bestaudio/best', 
       '--no-playlist',
       '--no-warnings',
     ])
@@ -40,12 +49,18 @@ export async function searchAndPlay(query) {
     }
 
     if (!streamUrl) {
-      spinner.fail(chalk.red('  No stream found'))
+      if (spinner) spinner.fail(chalk.red('  No stream found'))
       return
     }
 
-    spinner.stop()
-    console.log(chalk.gray(`  ▶ ${title}`))
+    if (spinner) spinner.stop()
+    
+    if (!isStandalone) {
+      tui.updateState({ title, artist: '' })
+      tui.render()
+    } else {
+      console.log(chalk.gray(`  ▶ ${title}`))
+    }
 
     await playStream(streamUrl, durationInSeconds)
   } catch (err) {
@@ -57,7 +72,6 @@ import readline from 'readline'
 import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
 
 export async function searchCommand(query) {
-  console.log(chalk.bold(`\n  Searching: ${query}\n`))
 
   let isPaused = false
   readline.emitKeypressEvents(process.stdin)
@@ -67,26 +81,38 @@ export async function searchCommand(query) {
   const handleInput = (str, key) => {
     if ((key.ctrl && key.name === 'c') || key.name === 'q') {
       stopCurrentStream()
+      tui.leaveAlternateScreen()
       process.exit(0)
     } else if (key.name === 's' || key.name === 'space') {
       if (isPaused) {
         resumeCurrentStream()
         isPaused = false
+        tui.updateState({ isPaused: false })
+        tui.render()
       } else {
         pauseCurrentStream()
         isPaused = true
+        tui.updateState({ isPaused: true })
+        tui.render()
       }
+    } else if (key.name === 'c') {
+      tui.cycleAnimation()
+      tui.render()
     }
   }
 
   process.stdin.on('keypress', handleInput)
+
+  tui.enterAlternateScreen()
+  tui.updateState({ title: `Searching: ${query}`, artist: '', nextTrack: 'None' })
+  tui.render()
+
+  await searchAndPlay(query, false)
+
+  tui.leaveAlternateScreen()
   
-  console.log(chalk.gray('  Controls:'))
-  console.log(chalk.gray('  [Space] Pause/Resume  [q/Ctrl+C] Quit\n'))
-
-  await searchAndPlay(query)
-
   process.stdin.off('keypress', handleInput)
   if (process.stdin.isTTY) process.stdin.setRawMode(false)
   process.stdin.pause()
+  console.log(chalk.green('\n  [Success] Finished!\n'))
 }

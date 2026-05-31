@@ -5,6 +5,7 @@ import readline from 'readline'
 import { getAuthenticatedClient } from './auth.js'
 import { searchAndPlay } from './youtube.js'
 import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
+import { tui } from './tui.js'
 
 import spotifyUrlInfo from 'spotify-url-info'
 const { getTracks } = spotifyUrlInfo(fetch)
@@ -156,17 +157,20 @@ export async function playCommand(playlistInput, options) {
         if (isPaused) {
           resumeCurrentStream()
           isPaused = false
+          tui.updateState({ isPaused: false })
+          tui.render()
         } else {
           pauseCurrentStream()
           isPaused = true
+          tui.updateState({ isPaused: true })
+          tui.render()
         }
-      } else if (key.name === 'r') {
-        queue = shuffleArray([...tracks])
-        currentIndex = -1 // Will start at 0
-        stopCurrentStream()
+      } else if (key.name === 'c') {
+        tui.cycleAnimation()
+        tui.render()
       } else if (str === '/' || key.name === '/') {
         // Command mode!
-        teardownInput()
+        tui.leaveAlternateScreen()
         import('./player.js').then(player => player.suspendProgressBar())
         console.log('\n') // move below progress bar
 
@@ -192,48 +196,52 @@ export async function playCommand(playlistInput, options) {
         }
 
         import('./player.js').then(player => player.resumeProgressBar())
+        tui.enterAlternateScreen()
+        tui.render()
         setupInput()
       }
     }
 
     setupInput()
 
-    console.log(chalk.bold('\n  Starting playlist...\n'))
-    console.log(chalk.gray('  Controls:'))
-    console.log(chalk.gray('  [Space] Pause/Resume  [n/Right] Next  [p/Left] Prev  [r] Shuffle  [/] Search/Jump  [q/Ctrl+C] Quit\n'))
+    tui.enterAlternateScreen()
 
     for (; currentIndex < queue.length; currentIndex++) {
       if (isQuit) break
       
       let query
+      const track = queue[currentIndex]
+      
       if (nextCustomQuery) {
         query = nextCustomQuery
-        console.log(
-          chalk.gray(`  [Custom Search]`) +
-          chalk.cyan(` ${query}`)
-        )
-        // do not advance the playlist index so we resume where we left off after this custom song
+        tui.updateState({
+          title: `Custom Search: ${query}`,
+          artist: '',
+          nextTrack: track ? `${track.name} — ${track.artist}` : 'None'
+        })
         currentIndex-- 
         nextCustomQuery = null
       } else {
-        const track = queue[currentIndex]
-        const originalNumber = tracks.indexOf(track) + 1
         query = `${track.name} ${track.artist} official audio`
-        console.log(
-          chalk.gray(`  [${originalNumber}/${queue.length}]`) +
-          chalk.cyan(` ${track.name}`) +
-          chalk.gray(` — ${track.artist}`)
-        )
+        const next = queue[currentIndex + 1]
+        tui.updateState({
+          title: track.name,
+          artist: track.artist,
+          nextTrack: next ? `${next.name} — ${next.artist}` : 'None'
+        })
       }
 
-      // Re-enforce raw mode before every track in case a child process resets the terminal TTY
+      tui.render()
+
       if (process.stdin.isTTY) process.stdin.setRawMode(true)
       process.stdin.resume()
 
       isPaused = false
+      tui.updateState({ isPaused: false })
       await searchAndPlay(query)
     }
 
+    tui.leaveAlternateScreen()
     teardownInput()
 
     if (!isQuit) console.log(chalk.green('\n  [Success] Playlist finished!\n'))

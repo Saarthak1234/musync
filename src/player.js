@@ -1,6 +1,7 @@
 import { spawn } from 'child_process'
 import chalk from 'chalk'
 import { platform } from 'os'
+import { tui } from './tui.js'
 
 const OS = platform()
 
@@ -14,6 +15,7 @@ let currentUrl = null;
 let resolvePlayPromise = null;
 
 function formatTime(sec) {
+  if (isNaN(sec) || !isFinite(sec)) return "0:00";
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
@@ -63,13 +65,12 @@ function startFfplay(url, startTime) {
           if (elapsedTime > totalDuration) elapsedTime = totalDuration;
 
           if (!isProgressBarSuspended) {
-            const progress = elapsedTime / totalDuration;
-            const width = 30;
-            const filled = Math.round(width * progress);
-            const empty = width - filled;
-            
-            const bar = chalk.cyan('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
-            process.stdout.write(`\r  ${bar} ${chalk.white(formatTime(elapsedTime))} / ${chalk.gray(formatTime(totalDuration))}  `);
+            const progress = (elapsedTime / totalDuration) * 100;
+            tui.updateState({
+              progressPercent: progress,
+              timeString: `${formatTime(elapsedTime)} / ${formatTime(totalDuration)}`
+            });
+            tui.render();
           }
         }
       }
@@ -98,7 +99,6 @@ function startFfplay(url, startTime) {
 }
 
 function cleanupAndResolve() {
-  if (totalDuration > 0) process.stdout.write('\n');
   if (resolvePlayPromise) {
     resolvePlayPromise();
     resolvePlayPromise = null;

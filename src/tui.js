@@ -1,0 +1,151 @@
+import chalk from 'chalk'
+
+const CAT_ANIMATIONS = {
+  bop: [
+    [
+      "  /\\_/\\  ",
+      " ( o.o ) ",
+      "  > ^ <  "
+    ],
+    [
+      "  /\\_/\\  ",
+      " ( -.- ) ",
+      "  > ^ <  "
+    ]
+  ],
+  dj: [
+    [
+      "  /\\_/\\    ",
+      "=( °w° )=  ",
+      "  )   (  //",
+      " (__ __)// "
+    ],
+    [
+      "  /\\_/\\    ",
+      "=( >w< )=  ",
+      "  )   (  //",
+      " (__ __)// "
+    ]
+  ],
+  sleep: [
+    [
+      "         ",
+      "  |\\___/|",
+      "  )     (",
+      " =\\     /="
+    ],
+    [
+      "    z    ",
+      "  |\\___/|",
+      "  ) -.- (",
+      " =\\     /="
+    ],
+    [
+      "      Z  ",
+      "  |\\___/|",
+      "  ) -.- (",
+      " =\\     /="
+    ]
+  ]
+}
+
+export class TUI {
+  constructor() {
+    this.animationType = 'bop' // default
+    this.frameIndex = 0
+    this.frameCount = 0
+    this.state = {
+      title: 'Loading...',
+      artist: '',
+      timeString: '00:00 / 00:00',
+      progressPercent: 0,
+      nextTrack: '',
+      isPaused: false
+    }
+  }
+
+  enterAlternateScreen() {
+    process.stdout.write('\x1b[?1049h') // Enter alternate screen
+    process.stdout.write('\x1b[?25l')   // Hide cursor
+  }
+
+  leaveAlternateScreen() {
+    process.stdout.write('\x1b[?1049l') // Leave alternate screen
+    process.stdout.write('\x1b[?25h')   // Show cursor
+  }
+
+  cycleAnimation() {
+    const keys = Object.keys(CAT_ANIMATIONS)
+    const currentIndex = keys.indexOf(this.animationType)
+    this.animationType = keys[(currentIndex + 1) % keys.length]
+    this.frameIndex = 0
+  }
+
+  updateState(newState) {
+    this.state = { ...this.state, ...newState }
+  }
+
+  render() {
+    // Clear screen and move cursor to top left
+    process.stdout.write('\x1b[2J\x1b[H')
+
+    const width = process.stdout.columns || 80
+    const separator = chalk.gray('='.repeat(Math.min(width, 60)))
+    const centeredText = (text, rawLength = text.length) => {
+      const pad = Math.max(0, Math.floor((Math.min(width, 60) - rawLength) / 2))
+      return ' '.repeat(pad) + text
+    }
+
+    console.log(separator)
+    console.log(centeredText(chalk.bold.green('MUSYNC PLAYER'), 13))
+    console.log(separator)
+    console.log()
+    
+    // Track Info
+    console.log(chalk.cyan('  Currently Playing:'))
+    console.log(`  ${chalk.bold(this.state.title)} ${this.state.artist ? chalk.gray('— ' + this.state.artist) : ''}`)
+    console.log()
+    
+    // Progress Bar
+    const barWidth = 30
+    const filledCount = Math.floor((this.state.progressPercent / 100) * barWidth)
+    const emptyCount = Math.max(0, barWidth - filledCount)
+    const bar = chalk.green('=').repeat(filledCount) + chalk.gray('.').repeat(emptyCount)
+    
+    console.log(`  [${this.state.timeString}]`)
+    console.log(`  [${bar}]`)
+    console.log()
+
+    if (this.state.nextTrack) {
+      console.log(chalk.gray(`  Up Next: ${this.state.nextTrack}`))
+    } else {
+      console.log()
+    }
+    
+    console.log()
+    console.log(separator)
+    console.log()
+
+    // Animation
+    const frames = CAT_ANIMATIONS[this.state.animationType]
+    const currentFrame = frames[this.frameIndex]
+    
+    currentFrame.forEach(line => {
+      console.log(centeredText(chalk.magenta(line), line.length))
+    })
+
+    if (!this.state.isPaused) {
+      this.frameCount++
+      if (this.frameCount % 2 === 0) { // Slow down animation slightly
+        this.frameIndex = (this.frameIndex + 1) % frames.length
+      }
+    }
+
+    console.log()
+    console.log(separator)
+    console.log(chalk.gray('  Controls: [Space] Pause/Resume  [n/p] Next/Prev  [c] Change Cat  [q] Quit  [/] Jump/Search'))
+    console.log(separator)
+  }
+}
+
+export const tui = new TUI()
