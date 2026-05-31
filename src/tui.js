@@ -1,5 +1,7 @@
 import chalk from 'chalk'
 
+const CAT_COLORS = ['magenta', 'cyan', 'yellow', 'green', 'blue', 'red', 'white']
+
 const CAT_ANIMATIONS = {
   bop: [
     [
@@ -52,6 +54,7 @@ const CAT_ANIMATIONS = {
 export class TUI {
   constructor() {
     this.animationType = 'bop' // default
+    this.colorIndex = 0
     this.frameIndex = 0
     this.frameCount = 0
     this.state = {
@@ -79,6 +82,10 @@ export class TUI {
     const currentIndex = keys.indexOf(this.animationType)
     this.animationType = keys[(currentIndex + 1) % keys.length]
     this.frameIndex = 0
+  }
+
+  cycleColor() {
+    this.colorIndex = (this.colorIndex + 1) % CAT_COLORS.length
   }
 
   updateState(newState) {
@@ -129,9 +136,10 @@ export class TUI {
     // Animation
     const frames = CAT_ANIMATIONS[this.animationType]
     const currentFrame = frames[this.frameIndex]
+    const currentColor = CAT_COLORS[this.colorIndex]
     
     currentFrame.forEach(line => {
-      console.log(centeredText(chalk.magenta(line), line.length))
+      console.log(centeredText(chalk[currentColor](line), line.length))
     })
 
     if (!this.state.isPaused) {
@@ -143,7 +151,7 @@ export class TUI {
 
     console.log()
     console.log(separator)
-    console.log(chalk.gray('  Controls: [Space] Pause/Resume  [n/p] Next/Prev  [c] Change Cat  [q] Quit  [/] Jump/Search'))
+    console.log(chalk.gray('  Controls: [Space] Pause/Resume  [n/p] Next/Prev  [c] Change Cat  [v] Change Color  [q] Quit  [/] Jump/Search'))
     console.log(separator)
   }
 }

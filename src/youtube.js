@@ -98,6 +98,9 @@ export async function searchCommand(query) {
     } else if (key.name === 'c') {
       tui.cycleAnimation()
       tui.render()
+    } else if (key.name === 'v') {
+      tui.cycleColor()
+      tui.render()
     }
   }
 
