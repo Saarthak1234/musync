@@ -83,6 +83,10 @@ export async function playCommand(playlistInput, options) {
     }
 
     spinner.succeed(chalk.green(`  Found ${tracks.length} tracks`))
+    if ((urlMatch || playlistInput.startsWith('http')) && tracks.length === 100) {
+      console.log(chalk.yellow('\n  ⚠️  Notice: Spotify limits public URL previews to 100 tracks.'))
+      console.log(chalk.yellow('  To play the rest of this playlist, you must connect your account by running: ') + chalk.bold.cyan('musync auth\n'))
+    }
 
     if (!tracks.length) {
       console.log(chalk.yellow('\n  Playlist is empty.\n'))
