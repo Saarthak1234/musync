@@ -116,15 +116,12 @@ async function installFfmpeg() {
 }
 
 export async function checkFirstRun() {
-  if (isSetupComplete()) return
-
-  console.log(chalk.bold.green('\n  🎵 Welcome to Musync!\n'))
-
   // Self-installer feature for standalone binaries on Mac/Linux
   const isStandalone = !process.execPath.endsWith('node') && !process.execPath.endsWith('node.exe')
   const isGlobal = process.execPath.includes('/bin/') || process.execPath.includes('/opt/homebrew') || process.execPath.includes('\\AppData\\')
   
   if (isStandalone && !isGlobal && OS !== 'win32') {
+    console.log(chalk.bold.green('\n  🎵 Welcome to Musync!\n'))
     const { installGlobal } = await inquirer.prompt([{
       type: 'confirm',
       name: 'installGlobal',
@@ -144,6 +141,12 @@ export async function checkFirstRun() {
     }
   }
 
+  if (isSetupComplete()) return
+
+  if (!isStandalone || isGlobal || OS === 'win32') {
+    console.log(chalk.bold.green('\n  🎵 Welcome to Musync!\n'))
+  }
+  
   console.log(chalk.gray('  Checking for required dependencies...\n'))
 
   const missing = []
