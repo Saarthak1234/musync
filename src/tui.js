@@ -127,7 +127,7 @@ export class TUI {
     console.log()
 
     // Animation
-    const frames = CAT_ANIMATIONS[this.state.animationType]
+    const frames = CAT_ANIMATIONS[this.animationType]
     const currentFrame = frames[this.frameIndex]
     
     currentFrame.forEach(line => {
