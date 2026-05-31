@@ -92,7 +92,7 @@ async function installFfmpeg() {
       if (isInstalled('brew')) {
         execSync('brew install ffmpeg', { stdio: 'inherit' })
       } else {
-        console.log(chalk.yellow('  Please install ffmpeg manually: https://ffmpeg.org/download.html'))
+        throw new Error('Please install ffmpeg manually: https://ffmpeg.org/download.html')
       }
       break
 
@@ -103,18 +103,15 @@ async function installFfmpeg() {
         try {
           execSync('sudo dnf install -y ffmpeg', { stdio: 'inherit' })
         } catch {
-          console.log(chalk.yellow('  Could not auto-install ffmpeg. Please run: sudo apt install ffmpeg'))
+          throw new Error('Could not auto-install ffmpeg. Please run: sudo apt install ffmpeg')
         }
       }
       break
 
     case 'win32':
-      console.log(chalk.yellow(
-        '  ffmpeg on Windows needs manual install.\n' +
-        '  Download from: https://www.gyan.dev/ffmpeg/builds/\n' +
-        '  Then add it to your PATH.'
-      ))
-      break
+      throw new Error(
+        'ffmpeg on Windows needs manual install. Download from: https://www.gyan.dev/ffmpeg/builds/ Then add it to your PATH.'
+      )
   }
 }
 
