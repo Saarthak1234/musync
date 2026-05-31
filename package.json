@@ -18,6 +18,7 @@
     "conf": "^13.0.0",
     "dotenv": "^16.4.0",
     "inquirer": "^9.2.0",
+    "inquirer-autocomplete-prompt": "^3.0.1",
     "open": "^11.0.0",
     "ora": "^8.0.0",
     "spotify-uri": "^4.1.0",

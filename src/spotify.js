@@ -1,7 +1,10 @@
 import chalk from 'chalk'
 import ora from 'ora'
 import inquirer from 'inquirer'
+import inquirerAutocompletePrompt from 'inquirer-autocomplete-prompt'
 import readline from 'readline'
+
+inquirer.registerPrompt('autocomplete', inquirerAutocompletePrompt)
 import { getAuthenticatedClient } from './auth.js'
 import { searchAndPlay } from './youtube.js'
 import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
@@ -98,6 +101,12 @@ export async function playCommand(playlistInput, options) {
     let currentIndex = 0
 
     if (!options.shuffle) {
+      console.log(chalk.bold(`\n  Playlist Tracks:\n`))
+      tracks.forEach((t, i) => {
+        console.log(chalk.gray(`  ${String(i + 1).padStart(3, ' ')}. `) + chalk.white(t.name) + chalk.gray(` — ${t.artist}`))
+      })
+      console.log()
+
       const choices = [
         { name: chalk.yellow('▶ Play all from beginning'), value: 'play' },
         { name: chalk.cyan('🔀 Shuffle all tracks'), value: 'shuffle' },
@@ -111,11 +120,21 @@ export async function playCommand(playlistInput, options) {
         })
       })
 
+      const searchTracks = (answers, input = '') => {
+        return new Promise((resolve) => {
+          const results = choices.filter(choice => {
+            if (choice instanceof inquirer.Separator) return true
+            return choice.name.toLowerCase().includes(input.toLowerCase())
+          })
+          resolve(results)
+        })
+      }
+
       const { action } = await inquirer.prompt([{
-        type: 'list',
+        type: 'autocomplete',
         name: 'action',
-        message: 'Select a track to start from, or choose a playback option:',
-        choices: choices,
+        message: 'Type a track number to play, use arrow keys to scroll, or choose an option:',
+        source: searchTracks,
         pageSize: 15
       }])
 
