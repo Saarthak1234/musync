@@ -18,7 +18,7 @@ export async function searchAndPlay(query, isStandalone = false) {
     spinner = ora('  Finding on YouTube...').start()
   }
 
-  const searchQuery = `${query} lyric video`
+  const searchQuery = query
 
   try {
     const output = await ytDlp.execPromise([
@@ -107,10 +107,11 @@ export async function searchCommand(query) {
   process.stdin.on('keypress', handleInput)
 
   tui.enterAlternateScreen()
+  const finalQuery = `${query} lyric video`
   tui.updateState({ title: `Searching: ${query}`, artist: '', nextTrack: 'None' })
   tui.render()
 
-  await searchAndPlay(query, false)
+  await searchAndPlay(finalQuery, false)
 
   tui.leaveAlternateScreen()
   

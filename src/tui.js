@@ -135,7 +135,8 @@ export class TUI {
       progressPercent: 0,
       nextTrack: '',
       isPaused: false,
-      playlistPosition: ''
+      playlistPosition: '',
+      commandInput: undefined
     }
   }
 
@@ -224,7 +225,11 @@ export class TUI {
 
     console.log()
     console.log(separator)
-    console.log(chalk.gray('  Controls: [Space] Pause/Resume  [n/p] Next/Prev  [c] Change Cat  [v] Change Color  [q] Quit  [/] Jump/Search'))
+    if (this.state.commandInput !== undefined) {
+      console.log(chalk.bold.yellow('  Search or jump to track: ') + this.state.commandInput + chalk.bgWhite(' '))
+    } else {
+      console.log(chalk.gray('  Controls: [Space] Pause/Resume  [n/p] Next/Prev  [c] Change Cat  [v] Change Color  [q] Quit  [/] Jump/Search'))
+    }
     console.log(separator)
   }
 }

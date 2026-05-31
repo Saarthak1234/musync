@@ -129,6 +129,8 @@ export async function playCommand(playlistInput, options) {
     let isPaused = false
     let isQuit = false
     let nextCustomQuery = null // To hold a custom search query
+    let isCommandMode = false
+    let commandBuffer = ''
 
     const setupInput = () => {
       readline.emitKeypressEvents(process.stdin)
@@ -144,13 +146,47 @@ export async function playCommand(playlistInput, options) {
     }
 
     const handleInput = async (str, key) => {
+      if (!key) return
+
+      if (isCommandMode) {
+        if (key.name === 'return' || key.name === 'enter') {
+          isCommandMode = false
+          tui.updateState({ commandInput: undefined })
+          const val = commandBuffer.trim()
+          const num = parseInt(val, 10)
+          
+          if (!isNaN(num) && num > 0 && num <= tracks.length) {
+            const targetTrack = tracks[num - 1]
+            const targetIndex = queue.indexOf(targetTrack)
+            currentIndex = targetIndex - 1
+            stopCurrentStream()
+          } else if (val.length > 0) {
+            nextCustomQuery = val
+            stopCurrentStream()
+          }
+          tui.render()
+        } else if (key.name === 'escape') {
+          isCommandMode = false
+          tui.updateState({ commandInput: undefined })
+          tui.render()
+        } else if (key.name === 'backspace') {
+          commandBuffer = commandBuffer.slice(0, -1)
+          tui.updateState({ commandInput: commandBuffer })
+          tui.render()
+        } else if (str && str.length === 1) {
+          commandBuffer += str
+          tui.updateState({ commandInput: commandBuffer })
+          tui.render()
+        }
+        return
+      }
+
       if ((key.ctrl && key.name === 'c') || key.name === 'q') {
         stopCurrentStream()
         process.exit(0)
       } else if (key.name === 'n' || key.name === 'right') {
-        stopCurrentStream() // Resolves current stream, loop advances
+        stopCurrentStream() 
       } else if (key.name === 'p' || key.name === 'left') {
-        // -2 because the loop will increment currentIndex by 1 right after this
         currentIndex = Math.max(-1, currentIndex - 2) 
         stopCurrentStream()
       } else if (key.name === 's' || key.name === 'space') {
@@ -172,36 +208,10 @@ export async function playCommand(playlistInput, options) {
         tui.cycleColor()
         tui.render()
       } else if (str === '/' || key.name === '/') {
-        // Command mode!
-        tui.leaveAlternateScreen()
-        import('./player.js').then(player => player.suspendProgressBar())
-        console.log('\n') // move below progress bar
-
-        const { command } = await inquirer.prompt([{
-          type: 'input',
-          name: 'command',
-          message: 'Enter track number to jump to, or type a song name to play next:'
-        }])
-
-        const val = command.trim()
-        const num = parseInt(val, 10)
-
-        if (!isNaN(num) && num > 0 && num <= tracks.length) {
-          // Jump to track number (always based on original playlist indexing)
-          const targetTrack = tracks[num - 1]
-          const targetIndex = queue.indexOf(targetTrack)
-          currentIndex = targetIndex - 1 // -1 because loop increments by 1
-          stopCurrentStream()
-        } else if (val.length > 0) {
-          // Play custom song next
-          nextCustomQuery = val
-          stopCurrentStream() // Skip current to play the custom song
-        }
-
-        import('./player.js').then(player => player.resumeProgressBar())
-        tui.enterAlternateScreen()
+        isCommandMode = true
+        commandBuffer = ''
+        tui.updateState({ commandInput: commandBuffer })
         tui.render()
-        setupInput()
       }
     }
 
@@ -226,7 +236,7 @@ export async function playCommand(playlistInput, options) {
         currentIndex-- 
         nextCustomQuery = null
       } else {
-        query = `${track.name} ${track.artist} official audio`
+        query = `${track.name} ${track.artist} lyric video`
         const next = queue[currentIndex + 1]
         const originalNumber = tracks.indexOf(track) + 1
         tui.updateState({
