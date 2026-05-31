@@ -74,12 +74,48 @@ import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './pl
 export async function searchCommand(query) {
 
   let isPaused = false
+  let isQuit = false
+  let isCommandMode = false
+  let commandBuffer = ''
+  let currentQuery = query
+  let nextQuery = null
+
   readline.emitKeypressEvents(process.stdin)
   if (process.stdin.isTTY) process.stdin.setRawMode(true)
   process.stdin.resume()
 
   const handleInput = (str, key) => {
+    if (!key) return
+
+    if (isCommandMode) {
+      if (key.name === 'return' || key.name === 'enter') {
+        isCommandMode = false
+        tui.updateState({ commandInput: undefined })
+        const val = commandBuffer.trim()
+        
+        if (val.length > 0) {
+          nextQuery = val
+          stopCurrentStream()
+        }
+        tui.render()
+      } else if (key.name === 'escape') {
+        isCommandMode = false
+        tui.updateState({ commandInput: undefined })
+        tui.render()
+      } else if (key.name === 'backspace') {
+        commandBuffer = commandBuffer.slice(0, -1)
+        tui.updateState({ commandInput: commandBuffer })
+        tui.render()
+      } else if (str && str.length === 1) {
+        commandBuffer += str
+        tui.updateState({ commandInput: commandBuffer })
+        tui.render()
+      }
+      return
+    }
+
     if ((key.ctrl && key.name === 'c') || key.name === 'q') {
+      isQuit = true
       stopCurrentStream()
       tui.leaveAlternateScreen()
       process.exit(0)
@@ -107,17 +143,32 @@ export async function searchCommand(query) {
     } else if (str === '-' || str === '_') {
       tui.decreaseSpeed()
       tui.render()
+    } else if (str === '/' || key.name === '/') {
+      isCommandMode = true
+      commandBuffer = ''
+      tui.updateState({ commandInput: commandBuffer })
+      tui.render()
     }
   }
 
   process.stdin.on('keypress', handleInput)
 
   tui.enterAlternateScreen()
-  const finalQuery = `${query} lyric video`
-  tui.updateState({ title: `Searching: ${query}`, artist: '', nextTrack: 'None' })
-  tui.render()
 
-  await searchAndPlay(finalQuery, false)
+  while (currentQuery && !isQuit) {
+    const finalQuery = `${currentQuery} lyric video`
+    tui.updateState({ title: `Searching: ${currentQuery}`, artist: '', nextTrack: 'None' })
+    tui.render()
+
+    await searchAndPlay(finalQuery, false)
+
+    if (nextQuery) {
+      currentQuery = nextQuery
+      nextQuery = null
+    } else {
+      break
+    }
+  }
 
   tui.leaveAlternateScreen()
   
