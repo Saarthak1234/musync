@@ -98,29 +98,31 @@ export async function playCommand(playlistInput, options) {
     let currentIndex = 0
 
     if (!options.shuffle) {
-      console.log(chalk.bold(`\n  Playlist Tracks:\n`))
+      const choices = [
+        { name: chalk.yellow('▶ Play all from beginning'), value: 'play' },
+        { name: chalk.cyan('🔀 Shuffle all tracks'), value: 'shuffle' },
+        new inquirer.Separator()
+      ]
+
       tracks.forEach((t, i) => {
-        console.log(chalk.gray(`  ${String(i + 1).padStart(3, ' ')}. `) + chalk.white(t.name) + chalk.gray(` — ${t.artist}`))
+        choices.push({
+          name: chalk.gray(`${String(i + 1).padStart(3, ' ')}. `) + chalk.white(t.name) + chalk.gray(` — ${t.artist}`),
+          value: i
+        })
       })
-      console.log()
 
       const { action } = await inquirer.prompt([{
-        type: 'input',
+        type: 'list',
         name: 'action',
-        message: 'Enter track number to play, "shuffle", or press Enter for normal play:',
-        default: 'play'
+        message: 'Select a track to start from, or choose a playback option:',
+        choices: choices,
+        pageSize: 15
       }])
 
-      const val = action.trim().toLowerCase()
-      if (val === 'shuffle' || val === 's') {
+      if (action === 'shuffle') {
         queue = shuffleArray([...tracks])
-      } else if (val !== 'play' && val !== 'p' && val !== '') {
-        const num = parseInt(val, 10)
-        if (!isNaN(num) && num > 0 && num <= tracks.length) {
-          currentIndex = num - 1
-        } else {
-          console.log(chalk.yellow('  Invalid input, starting from the beginning.\n'))
-        }
+      } else if (action !== 'play') {
+        currentIndex = parseInt(action, 10)
       }
     } else {
       queue = shuffleArray([...tracks])
