@@ -15,12 +15,17 @@ Musync features an interactive CLI that gives you total control of your playback
 
 ## Installation & Setup 🚀
 
-### Method 1: Download Standalone Executable (Recommended)
-You do not need Node.js installed. Just download the pre-compiled binary for your operating system (Mac, Windows, or Linux) from the Releases page and run it:
+### Method 1: The One-Line Installer (Mac & Linux)
+The easiest way to install Musync globally so you can run it from anywhere. Open your terminal and paste this command:
 ```bash
-./musync
+curl -sL https://raw.githubusercontent.com/saarthakagarwal0408/musync/main/install.sh | bash
 ```
-*(When you run it for the first time, the built-in wizard will automatically download `ffmpeg` and `yt-dlp` for you).*
+*(You may be prompted for your password to install it globally).*
+
+### Method 2: Manual Download (Windows)
+1. Go to the [Releases](https://github.com/saarthakagarwal0408/musync/releases) page.
+2. Download `musync-windows.exe`.
+3. Open it! (You can also rename it to `musync.exe` and add it to your Windows Environment Variables Path to run it globally from command prompt).
 
 ### Method 2: Install via Source (For Developers)
 Ensure you have Node.js (v18+) installed.

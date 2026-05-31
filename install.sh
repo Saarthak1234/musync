@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Musync Auto-Installer for macOS and Linux
+# This script detects your OS, downloads the correct standalone binary from GitHub Releases,
+# and installs it globally so you can just type 'musync'.
+
+set -e
+
+echo "🎵 Installing Musync..."
+
+# Detect OS and Architecture
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+BINARY_URL=""
+REPO="saarthakagarwal0408/musync"
+# We will use the 'latest' release tag from GitHub API
+TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+if [ -z "$TAG" ]; then
+  # Fallback to hardcoded v1.0.0 if API fails (e.g. rate limit)
+  TAG="v1.0.0"
+fi
+
+echo "  -> Detected OS: $OS"
+echo "  -> Detected Arch: $ARCH"
+
+if [ "$OS" = "Darwin" ]; then
+  if [ "$ARCH" = "arm64" ]; then
+    BINARY_URL="https://github.com/$REPO/releases/download/$TAG/musync-mac-arm"
+  else
+    BINARY_URL="https://github.com/$REPO/releases/download/$TAG/musync-mac-intel"
+  fi
+elif [ "$OS" = "Linux" ]; then
+  BINARY_URL="https://github.com/$REPO/releases/download/$TAG/musync-linux"
+else
+  echo "❌ Unsupported OS for auto-install: $OS"
+  echo "Please download the binary manually from GitHub."
+  exit 1
+fi
+
+echo "  -> Downloading Musync from $BINARY_URL..."
+
+# Download the file to a temporary location
+curl -L -o /tmp/musync $BINARY_URL
+
+# Make it executable
+chmod +x /tmp/musync
+
+echo "  -> Installing to /usr/local/bin (may require sudo password)..."
+# Move to a directory in PATH
+sudo mv /tmp/musync /usr/local/bin/musync
+
+echo "✅ Musync installed successfully!"
+echo "You can now run 'musync' from anywhere."
