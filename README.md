@@ -6,27 +6,18 @@ Musync features an interactive CLI that gives you total control of your playback
 
 ## Features ✨
 
-- **Authenticate with Spotify:** Uses official Spotify OAuth to log in securely and fetch your personal playlists.
-- **Fetch from Spotify, Play from YouTube:** Automatically resolves your Spotify tracks and plays the highest quality audio streams from YouTube.
-- **Interactive Playback UI:** Lists all your tracks and allows you to jump directly to any track number.
-- **Keyboard Controls:** Once playback starts, control the stream using native terminal keystrokes:
+- **Zero-Setup Playback:** Paste any public Spotify Playlist URL to start playing immediately—no Spotify account or login required!
+- **Optional Spotify Login:** Connect your own Spotify Developer App to securely fetch and play your private playlists by name.
+- **Auto Dependency Management:** A smart setup wizard automatically installs `yt-dlp` and `ffmpeg` so you don't have to configure anything manually!
+- **Interactive Playback UI:** Lists all your tracks and displays an accurate real-time progress bar synced to the audio engine.
+- **Command Mode (Jump & Search):** Press `/` during playback to instantly jump to another track number or type a custom song name to play it mid-playlist.
+- **Keyboard Controls:** Control the stream using native terminal keystrokes:
   - `[Space] / s` : Pause and Resume
   - `[n] / Right Arrow` : Skip to Next Track
   - `[p] / Left Arrow` : Go back to Previous Track
   - `[r]` : Reshuffle the remaining playlist
+  - `[/]` : Enter Command Mode (Jump to track / Play custom song)
   - `[q] / Ctrl+C` : Quit Musync
-- **Shuffle Mode:** Shuffle your playlists locally before starting.
-- **Updated API Support:** Fully supports Spotify's recent API changes (such as the new `/items` endpoints).
-
-## Prerequisites 🛠️
-
-Before installing, ensure you have the following installed on your machine:
-- **Node.js** (v18 or higher recommended)
-- **ffmpeg & ffplay**: Used for native background audio playback.
-  - *macOS*: `brew install ffmpeg`
-  - *Linux*: `sudo apt install ffmpeg`
-  - *Windows*: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
-- **Spotify Developer App**: You need a Spotify Client ID and Secret to run your own local OAuth server.
 
 ## Setup & Installation 🚀
 
@@ -43,36 +34,42 @@ Before installing, ensure you have the following installed on your machine:
    ```
    *This allows you to run the `musync` command from anywhere in your terminal.*
 
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory by copying the `.env.example`:
+3. **Run for the first time:**
    ```bash
-   cp .env.example .env
+   musync
    ```
-   Fill in your Spotify Developer credentials in the `.env` file:
-   ```env
-   SPOTIFY_CLIENT_ID=your_client_id_here
-   SPOTIFY_CLIENT_SECRET=your_client_secret_here
-   SPOTIFY_REDIRECT_URI=http://127.0.0.1:8888/callback
-   ```
+   *Musync will launch an automated setup wizard. It will check for `ffmpeg` and `yt-dlp` and install them if missing. It will also ask if you want to set up your Spotify credentials or if you just want to use the public URL mode.*
 
 ## Usage 🎶
 
-### Authentication
-Authenticate with your Spotify account. This will open a browser window for secure OAuth login.
+### 1. Play Public URLs (No Login Required)
+You can play any public Spotify playlist directly using its URL without needing a Spotify account.
+```bash
+musync play "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
+```
+
+### 2. Search for a Specific Song (No Login Required)
+You can directly search and stream any custom song.
+```bash
+musync search "Rick Astley Never Gonna Give You Up"
+```
+
+### 3. Authenticate with Spotify (For Private Playlists)
+To fetch your private playlists by name, you can log in. (You must complete the Developer App setup in the setup wizard first).
 ```bash
 musync auth
 ```
 
-### List Playlists
-List all the playlists currently saved in your Spotify library along with their exact track counts.
+### 4. List Your Playlists
+List all the playlists currently saved in your Spotify library.
 ```bash
 musync list
 ```
 
-### Play Music
-Start playing a specific playlist by name.
+### 5. Play Your Playlists by Name
+Start playing a specific playlist by name from your connected Spotify account.
 ```bash
-musync play "Playlist Name"
+musync play "My Awesome Playlist"
 ```
 **Interactive Prompt:** 
 When you run the play command, you will see a list of all tracks. You can then:
@@ -80,23 +77,11 @@ When you run the play command, you will see a list of all tracks. You can then:
 - Type `shuffle` (or `s`) to randomly shuffle the tracks.
 - Press **Enter** to play normally from the beginning.
 
-**CLI Options:**
-- Play and instantly shuffle without waiting for the prompt:
-  ```bash
-  musync play "Playlist Name" --shuffle
-  ```
-
-### Logout
-Clear your saved tokens and session data.
-```bash
-musync logout
-```
-
 ## How It Works ⚙️
-1. Musync uses `spotify-web-api-node` and native `fetch` API commands to securely query the user's Spotify Library.
-2. It parses the playlist details (using the modernized Spotify `/items` endpoint structures).
-3. It passes the track titles and artist names to `yt-dlp`, which does a fast query for the official audio stream URL on YouTube.
-4. `ffplay` streams the audio URL silently in the background, piping playback controls directly through Node's `readline` keypress listeners.
+1. Musync scrapes public Spotify URLs using `spotify-url-info` (or uses the Spotify API for private authenticated requests) to extract track names.
+2. It passes the track titles and artist names to `yt-dlp`, which does a fast query for the official audio stream URL on YouTube.
+3. `ffplay` streams the audio URL silently in the background, keeping connections alive with HTTP reconnect flags to bypass throttling.
+4. Musync parses the `ffplay` audio engine output to display a perfectly synchronized progress bar and allows control via Node's `readline` keystroke listeners.
 
 ## License
 MIT License.
