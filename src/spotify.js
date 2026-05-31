@@ -220,17 +220,20 @@ export async function playCommand(playlistInput, options) {
         tui.updateState({
           title: `Custom Search: ${query}`,
           artist: '',
-          nextTrack: track ? `${track.name} — ${track.artist}` : 'None'
+          nextTrack: track ? `${track.name} — ${track.artist}` : 'None',
+          playlistPosition: ''
         })
         currentIndex-- 
         nextCustomQuery = null
       } else {
         query = `${track.name} ${track.artist} official audio`
         const next = queue[currentIndex + 1]
+        const originalNumber = tracks.indexOf(track) + 1
         tui.updateState({
           title: track.name,
           artist: track.artist,
-          nextTrack: next ? `${next.name} — ${next.artist}` : 'None'
+          nextTrack: next ? `${next.name} — ${next.artist}` : 'None',
+          playlistPosition: `[${originalNumber}/${queue.length}]`
         })
       }
 

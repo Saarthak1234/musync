@@ -113,7 +113,8 @@ export class TUI {
       timeString: '00:00 / 00:00',
       progressPercent: 0,
       nextTrack: '',
-      isPaused: false
+      isPaused: false,
+      playlistPosition: ''
     }
   }
 
@@ -159,7 +160,8 @@ export class TUI {
     console.log()
     
     // Track Info
-    console.log(chalk.cyan('  Currently Playing:'))
+    const pos = this.state.playlistPosition ? ` ${chalk.magenta(this.state.playlistPosition)}` : ''
+    console.log(chalk.cyan(`  Currently Playing${pos}:`))
     console.log(`  ${chalk.bold(this.state.title)} ${this.state.artist ? chalk.gray('— ' + this.state.artist) : ''}`)
     console.log()
     
