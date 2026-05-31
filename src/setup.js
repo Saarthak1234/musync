@@ -220,14 +220,18 @@ async function checkSpotifyCredentials() {
     return;
   }
 
-  console.log(chalk.bold('\n  Follow these steps to get your credentials:\n'));
-  console.log(chalk.gray('  1.') + ' Go to ' + chalk.cyan('https://developer.spotify.com/dashboard'));
-  console.log(chalk.gray('  2.') + ' Log in and click ' + chalk.bold('"Create app"'));
-  console.log(chalk.gray('  3.') + ' App Name: ' + chalk.white('Musync CLI') + ' (or anything)');
-  console.log(chalk.gray('  4.') + ' App Description: ' + chalk.white('Local CLI player'));
-  console.log(chalk.gray('  5.') + ' Redirect URI: ' + chalk.cyan.bold('http://127.0.0.1:8888'));
-  console.log(chalk.gray('  6.') + ' APIs used: ' + chalk.white('Web API'));
-  console.log(chalk.gray('  7.') + ' Save, then click ' + chalk.bold('"Settings"') + ' in your new app.\n');
+  console.log(chalk.bold('\n  Follow these exact steps to connect your account:\n'));
+  console.log(chalk.gray('  1.') + ' Open your browser and go to: ' + chalk.cyan('https://developer.spotify.com/dashboard'));
+  console.log(chalk.gray('  2.') + ' Log in with your normal Spotify account.');
+  console.log(chalk.gray('  3.') + ' Click the ' + chalk.bold('"Create app"') + ' button on the top right.');
+  console.log(chalk.gray('  4.') + ' Fill in the form:');
+  console.log(chalk.gray('     - App Name: ') + chalk.white('Musync CLI'));
+  console.log(chalk.gray('     - App Description: ') + chalk.white('Local music player'));
+  console.log(chalk.gray('     - Redirect URI: ') + chalk.cyan.bold('http://127.0.0.1:8888') + chalk.red(' (IMPORTANT: You must click "Add" after typing this!)'));
+  console.log(chalk.gray('     - Which API is your app using?: ') + chalk.white('Check the box for "Web API"'));
+  console.log(chalk.gray('  5.') + ' Scroll down, check the Terms of Service box, and click ' + chalk.bold('"Save"'));
+  console.log(chalk.gray('  6.') + ' On the next page, click ' + chalk.bold('"Settings"') + ' (the gear icon near the top right).');
+  console.log(chalk.gray('  7.') + ' You will now see your ' + chalk.cyan('Client ID') + ' and a link to view your ' + chalk.cyan('Client Secret') + '.\n');
 
   const { clientId, clientSecret } = await inquirer.prompt([
     {
