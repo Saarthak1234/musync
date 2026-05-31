@@ -207,6 +207,12 @@ export async function playCommand(playlistInput, options) {
       } else if (key.name === 'v') {
         tui.cycleColor()
         tui.render()
+      } else if (str === '+' || str === '=') {
+        tui.increaseSpeed()
+        tui.render()
+      } else if (str === '-' || str === '_') {
+        tui.decreaseSpeed()
+        tui.render()
       } else if (str === '/' || key.name === '/') {
         isCommandMode = true
         commandBuffer = ''

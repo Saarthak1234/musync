@@ -126,6 +126,7 @@ export class TUI {
   constructor() {
     this.animationType = 'bop' // default
     this.colorIndex = 0
+    this.animationSpeed = 2
     this.frameIndex = 0
     this.frameCount = 0
     this.state = {
@@ -159,6 +160,14 @@ export class TUI {
 
   cycleColor() {
     this.colorIndex = (this.colorIndex + 1) % CAT_COLORS.length
+  }
+
+  increaseSpeed() {
+    this.animationSpeed = Math.max(1, this.animationSpeed - 1)
+  }
+
+  decreaseSpeed() {
+    this.animationSpeed = Math.min(10, this.animationSpeed + 1)
   }
 
   updateState(newState) {
@@ -218,7 +227,7 @@ export class TUI {
 
     if (!this.state.isPaused) {
       this.frameCount++
-      if (this.frameCount % 2 === 0) { // Slow down animation slightly
+      if (this.frameCount % this.animationSpeed === 0) {
         this.frameIndex = (this.frameIndex + 1) % frames.length
       }
     }
@@ -228,7 +237,7 @@ export class TUI {
     if (this.state.commandInput !== undefined) {
       console.log(chalk.bold.yellow('  Search or jump to track: ') + this.state.commandInput + chalk.bgWhite(' '))
     } else {
-      console.log(chalk.gray('  Controls: [Space] Pause/Resume  [n/p] Next/Prev  [c] Change Cat  [v] Change Color  [q] Quit  [/] Jump/Search'))
+      console.log(chalk.gray('  Controls: [Space] Pause  [n/p] Next/Prev  [c/v] Cat/Color  [+/-] Speed  [q] Quit  [/] Search'))
     }
     console.log(separator)
   }

@@ -101,6 +101,12 @@ export async function searchCommand(query) {
     } else if (key.name === 'v') {
       tui.cycleColor()
       tui.render()
+    } else if (str === '+' || str === '=') {
+      tui.increaseSpeed()
+      tui.render()
+    } else if (str === '-' || str === '_') {
+      tui.decreaseSpeed()
+      tui.render()
     }
   }
 
