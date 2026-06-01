@@ -257,17 +257,17 @@ export class TUI {
       // Simulate rhythmic bass beats using the animation speed parameter
       // The user can sync this with the music using +/- keys!
       const beatPhase = (this.frameIndex * this.animationSpeed) % 24
-      const isBeat = beatPhase < 4
+      const isBeat = beatPhase < 3
       
       for (let x = 0; x < this.fireWidth; x++) {
         let rand = Math.random()
         let heat
         if (isBeat) {
-          // Massive flare up on the "beat"
-          heat = rand > 0.1 ? 12 : 6
+          // Massive flare up on the "beat" (max heat 12)
+          heat = rand > 0.1 ? 12 : 9
         } else {
-          // Simmer down between beats
-          heat = rand > 0.4 ? 10 : (rand > 0.7 ? 11 : 2)
+          // Much lower simmer between beats so the jump is visible! (heat 4-7)
+          heat = rand > 0.3 ? 6 : (rand > 0.7 ? 8 : 2)
         }
         this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = heat
       }
