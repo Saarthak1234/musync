@@ -4,6 +4,36 @@ import figlet from 'figlet'
 const CAT_COLORS = ['magenta', 'cyan', 'yellow', 'green', 'blue', 'red', 'white']
 
 const CAT_ANIMATIONS = {
+  logo: [[]],
+  fire: [
+    [
+      "               (  .      )               ",
+      "           )           (              )  ",
+      "                 .  '   .   '  .  '  .   ",
+      "          (    , )       (.   )  (   ',  ",
+      "           .' ) ( . )    ,  ( ,     )   (",
+      "          ). , ( .   (  ) ( , ')  .' (  ,",
+      "         (_,) . ), ) _) _,')  (, ) '. )  "
+    ],
+    [
+      "               (         )               ",
+      "           )       .   (              )  ",
+      "                 .      .   '  .  '  .   ",
+      "          (    , )       (.   )  (   ',  ",
+      "           .' ) ( . )    ,  ( ,     )   (",
+      "          ). , ( .   (  ) ( , ')  .' (  ,",
+      "         (_,) . ), ) _) _,')  (, ) '. )  "
+    ],
+    [
+      "               (  .      )               ",
+      "           )           (      .       )  ",
+      "                 .  '   .      .  '  .   ",
+      "          (    , )       (.   )  (   ',  ",
+      "           .' ) ( . )    ,  ( ,     )   (",
+      "          ). , ( .   (  ) ( , ')  .' (  ,",
+      "         (_,) . ), ) _) _,')  (, ) '. )  "
+    ]
+  ],
   bop: [
     [
       "        ( meow... ) ",
@@ -121,13 +151,12 @@ const CAT_ANIMATIONS = {
       " ------------------"
     ]
   ],
-  title: [[]],
-  logo: [[]]
+  title: [[]]
 }
 
 export class TUI {
   constructor() {
-    this.animationType = 'bop' // default
+    this.animationType = 'logo' // default
     this.colorIndex = 0
     this.animationSpeed = 2
     this.frameIndex = 0
