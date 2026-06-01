@@ -30,7 +30,7 @@ function getLocalBinDir() {
   return dir
 }
 
-function downloadFile(url, dest) {
+function downloadFile(url, dest, spinner, depName = 'File') {
   return new Promise((resolve, reject) => {
     const file = createWriteStream(dest)
     const request = (targetUrl) => {
@@ -41,9 +41,23 @@ function downloadFile(url, dest) {
           return request(res.headers.location)
         }
         if (res.statusCode !== 200) {
-          reject(new Error(`HTTP ${res.statusCode}`))
+          reject(new Error(`HTTP ${res.statusCode} from ${targetUrl}`))
           return
         }
+
+        const totalBytes = parseInt(res.headers['content-length'], 10)
+        let downloadedBytes = 0
+
+        res.on('data', (chunk) => {
+          downloadedBytes += chunk.length
+          if (spinner && totalBytes) {
+            const percent = ((downloadedBytes / totalBytes) * 100).toFixed(1)
+            const mbTotal = (totalBytes / (1024 * 1024)).toFixed(1)
+            const mbDone = (downloadedBytes / (1024 * 1024)).toFixed(1)
+            spinner.text = `  Installing ${depName}... (${percent}% - ${mbDone}MB / ${mbTotal}MB)`
+          }
+        })
+
         res.pipe(file)
         file.on('finish', () => { file.close(); resolve() })
       }).on('error', reject)
@@ -52,32 +66,43 @@ function downloadFile(url, dest) {
   })
 }
 
-async function installYtDlp() {
+async function installYtDlp(spinner) {
   switch (OS) {
     case 'darwin':
       if (isInstalled('brew')) {
+        if (spinner) spinner.stop()
         execSync('brew install yt-dlp', { stdio: 'inherit' })
+        if (spinner) spinner.start()
       } else {
+        if (spinner) spinner.stop()
         execSync(
           'curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp',
           { stdio: 'inherit' }
         )
+        if (spinner) spinner.start()
       }
       break
 
     case 'linux':
+      if (spinner) spinner.stop()
       execSync(
         'sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && sudo chmod a+rx /usr/local/bin/yt-dlp',
         { stdio: 'inherit' }
       )
+      if (spinner) spinner.start()
       break
 
     case 'win32': {
       if (isInstalled('winget')) {
         try {
+          if (spinner) spinner.stop()
+          console.log(chalk.gray('  Starting winget installation for yt-dlp...'))
           execSync('winget install -e --id yt-dlp.yt-dlp --accept-source-agreements --accept-package-agreements', { stdio: 'inherit' })
+          if (spinner) spinner.start()
           break
-        } catch {
+        } catch (e) {
+          console.log(chalk.red(`  [Winget Error] ${e.message}`))
+          if (spinner) spinner.start()
           // fallback
         }
       }
@@ -85,43 +110,56 @@ async function installYtDlp() {
       const dest = path.join(dir, 'yt-dlp.exe')
       await downloadFile(
         'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
-        dest
+        dest,
+        spinner,
+        'yt-dlp'
       )
       // add to PATH for this session
       process.env.PATH = `${dir};${process.env.PATH}`
+      if (spinner) spinner.text = `  Installing yt-dlp...`
       break
     }
   }
 }
 
-async function installFfmpeg() {
+async function installFfmpeg(spinner) {
   switch (OS) {
     case 'darwin':
       if (isInstalled('brew')) {
+        if (spinner) spinner.stop()
         execSync('brew install ffmpeg', { stdio: 'inherit' })
+        if (spinner) spinner.start()
       } else {
         throw new Error('Please install ffmpeg manually: https://ffmpeg.org/download.html')
       }
       break
 
     case 'linux':
+      if (spinner) spinner.stop()
       try {
         execSync('sudo apt-get install -y ffmpeg', { stdio: 'inherit' })
       } catch {
         try {
           execSync('sudo dnf install -y ffmpeg', { stdio: 'inherit' })
         } catch {
+          if (spinner) spinner.start()
           throw new Error('Could not auto-install ffmpeg. Please run: sudo apt install ffmpeg')
         }
       }
+      if (spinner) spinner.start()
       break
 
     case 'win32':
       if (isInstalled('winget')) {
         try {
+          if (spinner) spinner.stop()
+          console.log(chalk.gray('  Starting winget installation for ffmpeg...'))
           execSync('winget install -e --id Gyan.FFmpeg --accept-source-agreements --accept-package-agreements', { stdio: 'inherit' })
+          if (spinner) spinner.start()
           break
         } catch (e) {
+          console.log(chalk.red(`  [Winget Error] ${e.message}`))
+          if (spinner) spinner.start()
           // fallback
         }
       }
@@ -193,8 +231,8 @@ export async function checkFirstRun() {
   for (const dep of missing) {
     const spinner = ora(`  Installing ${dep}...`).start()
     try {
-      if (dep === 'yt-dlp')  await installYtDlp()
-      if (dep === 'ffmpeg')  await installFfmpeg()
+      if (dep === 'yt-dlp')  await installYtDlp(spinner)
+      if (dep === 'ffmpeg')  await installFfmpeg(spinner)
       spinner.succeed(chalk.green(`  ${dep} installed`))
     } catch (err) {
       spinner.fail(chalk.red(`  Failed to install ${dep}: ${err.message}`))
