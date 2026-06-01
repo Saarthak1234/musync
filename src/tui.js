@@ -434,11 +434,11 @@ export class TUI {
     }
     out.push(separator)
     
-    // Clear to end of screen to erase trailing output if the new frame is shorter
+    // Clear to end of screen to erase trailing output if the new frame is shorter vertically
     out.push('\x1b[J')
     
-    // Flush the entire buffered frame exactly once!
-    process.stdout.write(out.join('\n') + '\n')
+    // Flush the entire buffered frame exactly once! (with \x1b[K to clear each line horizontally)
+    process.stdout.write(out.join('\x1b[K\n') + '\x1b[K\n')
   }
 }
 
