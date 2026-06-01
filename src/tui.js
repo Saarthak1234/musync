@@ -325,8 +325,8 @@ export class TUI {
       frames = [ fireLines ]
     } else if (this.animationType === 'eq') {
       const eqWidth = innerWidth
-      const numBars = Math.floor(eqWidth / 2) // '█ ' per bar
-      const maxHeight = 16
+      const numBars = Math.floor(eqWidth / 2) // '▄ ' per bar
+      const maxHeight = 26
       
       if (!this.eqBars || this.eqBars.length !== numBars) {
         this.eqBars = new Array(numBars).fill(0)
@@ -357,8 +357,8 @@ export class TUI {
           // Fast attack
           this.eqBars[i] += (target - this.eqBars[i]) * 0.6
         } else {
-          // Gravity decay
-          this.eqBars[i] -= 0.5 + (i * 0.015) // High bands fall slightly faster
+          // Gravity decay (increased slightly for the taller height)
+          this.eqBars[i] -= 0.8 + (i * 0.02) // High bands fall slightly faster
         }
         this.eqBars[i] = Math.max(0, Math.min(maxHeight, this.eqBars[i]))
         
@@ -366,7 +366,7 @@ export class TUI {
         if (this.eqBars[i] >= this.eqPeaks[i]) {
           this.eqPeaks[i] = this.eqBars[i]
         } else {
-          this.eqPeaks[i] -= 0.1 // Slow float downwards
+          this.eqPeaks[i] -= 0.15 // Slow float downwards
         }
       }
       
@@ -375,9 +375,9 @@ export class TUI {
         let line = ''
         for (let i = 0; i < numBars; i++) {
           if (this.eqBars[i] >= y) {
-            line += '_ ' // The thinnest possible bar (sits at bottom of character cell)
+            line += '▄ ' // Thicker half-block bar
           } else if (Math.round(this.eqPeaks[i]) === y) {
-            line += '- ' // Peak floating slightly above the baseline
+            line += '_ ' // Peak dot sitting below the next block
           } else {
             line += '  ' // Empty space
           }
