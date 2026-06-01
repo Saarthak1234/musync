@@ -1,5 +1,12 @@
 import chalk from 'chalk'
 import figlet from 'figlet'
+import fontSmall from 'figlet/importable-fonts/Small.js'
+import fontStandard from 'figlet/importable-fonts/Standard.js'
+import fontSlant from 'figlet/importable-fonts/Slant.js'
+
+figlet.parseFont('Small', fontSmall)
+figlet.parseFont('Standard', fontStandard)
+figlet.parseFont('Slant', fontSlant)
 
 const CAT_COLORS = ['magenta', 'cyan', 'yellow', 'green', 'blue', 'red', 'white']
 
