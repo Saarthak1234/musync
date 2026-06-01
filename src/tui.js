@@ -254,21 +254,31 @@ export class TUI {
         this.firePixels = new Array(this.fireWidth * this.fireHeight).fill(0)
       }
       
-      // Simulate rhythmic bass beats using the animation speed parameter
-      // The user can sync this with the music using +/- keys!
+      // The user controls this.animationSpeed (1 to 10)
+      // We map this speed to the overall intensity, height, and density of the fire!
+      const speedNorm = Math.min(1.0, this.animationSpeed / 10.0)
       const beatPhase = (this.frameIndex * this.animationSpeed) % 24
       const isBeat = beatPhase < 3
       
       for (let x = 0; x < this.fireWidth; x++) {
         let rand = Math.random()
         let heat
+        
         if (isBeat) {
-          // Massive flare up on the "beat" (max heat 12)
-          heat = rand > 0.1 ? 12 : 9
+          // On beat: massive flare. Scales with speed.
+          const maxBeatHeat = Math.floor(9 + speedNorm * 3) // 9 to 12
+          heat = rand > 0.1 ? maxBeatHeat : maxBeatHeat - 3
         } else {
-          // Much lower simmer between beats so the jump is visible! (heat 4-7)
-          heat = rand > 0.3 ? 6 : (rand > 0.7 ? 8 : 2)
+          // Off beat: simmering base. Scales with speed.
+          const maxOffHeat = Math.floor(5 + speedNorm * 5) // 5 to 10
+          heat = rand > 0.3 ? maxOffHeat : Math.max(1, maxOffHeat - 4)
         }
+        
+        // Lower speeds reduce the overall fuel density at the base!
+        if (rand > 0.4 + speedNorm * 0.6) {
+          heat = 0
+        }
+        
         this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = heat
       }
       
@@ -279,9 +289,14 @@ export class TUI {
           const dst = src - this.fireWidth - rand + 1
           if (dst >= 0 && dst < this.firePixels.length) {
             let decay = rand & 1
-            if (Math.random() < (1 - y / this.fireHeight) * 0.7) {
+            
+            // Higher speed = less decay = taller fire.
+            // Lower speed = rapid decay = shorter fire.
+            const decayProb = (1 - y / this.fireHeight) * (1.1 - speedNorm * 0.7)
+            if (Math.random() < decayProb) {
               decay += 1
             }
+            
             this.firePixels[dst] = Math.max(0, this.firePixels[src] - decay)
           }
         }
