@@ -97,7 +97,7 @@ When you run the play command for a playlist, you will see a list of all tracks.
 **Interactive Playback Controls:**
 Once the player starts, you can control playback directly using your keyboard:
 - **Spacebar:** Pause or resume playback.
-- **c:** Cycle through different ASCII animations (Musync Logo, Fire, Cats, Developer Tools, Dynamic Track Title).
+- **c:** Cycle through different ASCII animations (Musync Logo, Fire, Retro Equalizer, Cats, Developer Tools, Dynamic Track Title).
 - **v:** Change the accent color of the ASCII animations.
 - **+ / -:** Adjust the baseline speed and intensity of the ASCII animations.
 

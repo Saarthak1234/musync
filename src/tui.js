@@ -6,6 +6,7 @@ const CAT_COLORS = ['magenta', 'cyan', 'yellow', 'green', 'blue', 'red', 'white'
 const CAT_ANIMATIONS = {
   logo: [[]],
   fire: [[]],
+  eq: [[]],
   bop: [
     [
       "        ( meow... ) ",
@@ -322,6 +323,68 @@ export class TUI {
         fireLines.push(line)
       }
       frames = [ fireLines ]
+    } else if (this.animationType === 'eq') {
+      const eqWidth = innerWidth
+      const numBars = Math.floor(eqWidth / 2) // '█ ' per bar
+      const maxHeight = 16
+      
+      if (!this.eqBars || this.eqBars.length !== numBars) {
+        this.eqBars = new Array(numBars).fill(0)
+        this.eqPeaks = new Array(numBars).fill(0)
+      }
+      
+      const manualIntensity = 1.0 - ((this.animationSpeed - 1) / 9.0)
+      const hasAudio = this.state.audioIntensity !== undefined
+      const audioPulse = hasAudio ? this.state.audioIntensity : 0
+      
+      // Boost the intensity slightly for EQ so it looks active
+      const intensity = Math.min(1.0, Math.max(0.05, manualIntensity * 0.3 + audioPulse * 1.5))
+      
+      for (let i = 0; i < numBars; i++) {
+        // Pseudo-random frequencies
+        const bandFreq = i / numBars
+        let target = 0
+        
+        // Left (bass) updates more often and jumps higher
+        if (Math.random() > bandFreq * 0.4) {
+           const wave = Math.sin(this.frameIndex * 0.2 + i * 0.5) * 0.5 + 0.5
+           const barIntensity = intensity * (0.3 + 0.7 * wave) * (0.4 + Math.random() * 0.6)
+           target = barIntensity * maxHeight * 1.3
+        }
+        
+        // Interpolate bar towards target
+        if (this.eqBars[i] < target) {
+          // Fast attack
+          this.eqBars[i] += (target - this.eqBars[i]) * 0.6
+        } else {
+          // Gravity decay
+          this.eqBars[i] -= 0.5 + (i * 0.015) // High bands fall slightly faster
+        }
+        this.eqBars[i] = Math.max(0, Math.min(maxHeight, this.eqBars[i]))
+        
+        // Handle floating peaks
+        if (this.eqBars[i] >= this.eqPeaks[i]) {
+          this.eqPeaks[i] = this.eqBars[i]
+        } else {
+          this.eqPeaks[i] -= 0.1 // Slow float downwards
+        }
+      }
+      
+      const eqLines = []
+      for (let y = maxHeight; y > 0; y--) {
+        let line = ''
+        for (let i = 0; i < numBars; i++) {
+          if (this.eqBars[i] >= y) {
+            line += '█ ' // Solid bar
+          } else if (Math.round(this.eqPeaks[i]) === y) {
+            line += '- ' // Floating peak dot
+          } else {
+            line += '  ' // Empty space
+          }
+        }
+        eqLines.push(line)
+      }
+      frames = [ eqLines ]
     }
 
     const currentFrame = frames[this.frameIndex % frames.length] || []
