@@ -32,12 +32,10 @@ function getLocalBinDir() {
 
 function downloadFile(url, dest, spinner, depName = 'File') {
   return new Promise((resolve, reject) => {
-    const file = createWriteStream(dest)
     const request = (targetUrl) => {
       https.get(targetUrl, (res) => {
         // follow redirects
         if (res.statusCode === 301 || res.statusCode === 302) {
-          file.destroy()
           return request(res.headers.location)
         }
         if (res.statusCode !== 200) {
@@ -45,6 +43,7 @@ function downloadFile(url, dest, spinner, depName = 'File') {
           return
         }
 
+        const file = createWriteStream(dest)
         const totalBytes = parseInt(res.headers['content-length'], 10)
         let downloadedBytes = 0
 
@@ -60,6 +59,7 @@ function downloadFile(url, dest, spinner, depName = 'File') {
 
         res.pipe(file)
         file.on('finish', () => { file.close(); resolve() })
+        file.on('error', reject)
       }).on('error', reject)
     }
     request(url)
