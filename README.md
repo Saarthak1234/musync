@@ -27,21 +27,29 @@ If you want to play private playlists or playlists with more than 100 tracks, yo
 ## Installation & Setup
 
 ### Method 1: The One-Line Installer (Mac & Linux)
-The easiest way to install Musync globally so you can run it from anywhere. Open your terminal and paste this command:
+The easiest way to install Musync globally on macOS and Linux. Open your terminal and paste this command:
 ```bash
 curl -sL https://raw.githubusercontent.com/Saarthak1234/musync/main/install.sh | bash
 ```
-(You may be prompted for your password to install it globally and to install system dependencies like ffmpeg).
+*(You may be prompted for your password to copy the binary globally and to install ffmpeg/yt-dlp automatically)*.
 
-### Method 2: Manual Download (Windows)
+### Method 2: The One-Line Installer (Windows)
+The easiest way to install Musync globally on Windows. Open **PowerShell** and paste this command:
+```powershell
+irm https://raw.githubusercontent.com/Saarthak1234/musync/main/install.ps1 | iex
+```
+*(This automatically downloads the latest compiled binary, creates a safe home folder, and sets up your User PATH environment variables automatically)*.
+
+### Method 3: Manual Binary Download
+If you prefer to download standalone binaries directly without running installers:
 1. Go to the [Releases](https://github.com/Saarthak1234/musync/releases) page.
-2. Download `musync-windows.exe`.
-3. Open it! (You can also rename it to `musync.exe` and add it to your Windows Environment Variables Path to run it globally from command prompt).
+2. Download the binary for your platform (`musync-mac-arm`, `musync-mac-intel`, `musync-windows.exe`, or `musync-linux`).
+3. Move the binary into your system's PATH folder (such as `/usr/local/bin` on Mac/Linux or your environment variable path on Windows).
 
-### Method 3: Install via Source (For Developers)
+### Method 4: Install via Source (For Developers)
 Ensure you have Node.js (v18+) installed.
 ```bash
-git clone <repo-url>
+git clone https://github.com/Saarthak1234/musync.git
 cd musync
 npm install
 npm link
