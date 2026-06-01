@@ -8,7 +8,7 @@ import { createWriteStream, mkdirSync } from 'fs'
 import chalk from 'chalk'
 import ora from 'ora'
 import inquirer from 'inquirer'
-import { isSetupComplete, markSetupComplete } from './config.js'
+import { isSetupComplete, markSetupComplete, getAppCredentials, saveAppCredentials } from './config.js'
 
 const execAsync = promisify(exec)
 const OS = platform() // 'darwin', 'linux', 'win32'
@@ -246,16 +246,11 @@ export async function checkFirstRun() {
   console.log()
 }
 
-async function checkSpotifyCredentials() {
-  const envPath = path.join(process.cwd(), '.env');
-  let envExists = false;
-  try {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    if (envContent.includes('SPOTIFY_CLIENT_ID') && envContent.includes('SPOTIFY_CLIENT_SECRET')) {
-      return; // Already setup
-    }
-  } catch (e) {
-    // env doesn't exist
+export async function checkSpotifyCredentials() {
+  const { clientId: existingId, clientSecret: existingSecret } = getAppCredentials();
+  
+  if (existingId && existingSecret) {
+    return; // Already setup
   }
 
   console.log(chalk.bold.cyan('\n  Optional: Connect your Spotify Account\n'));
@@ -302,11 +297,9 @@ async function checkSpotifyCredentials() {
     }
   ]);
 
-  const envData = `SPOTIFY_CLIENT_ID=${clientId.trim()}\nSPOTIFY_CLIENT_SECRET=${clientSecret.trim()}\nSPOTIFY_REDIRECT_URI=http://127.0.0.1:8888\n`;
-  
-  let existingEnv = '';
-  try { existingEnv = fs.readFileSync(envPath, 'utf8') + '\n'; } catch (e) {}
-  
-  fs.writeFileSync(envPath, existingEnv + envData);
-  console.log(chalk.green('\n  [Success] Credentials saved to .env!\n'));
+  saveAppCredentials({
+    clientId: clientId.trim(),
+    clientSecret: clientSecret.trim()
+  });
+  console.log(chalk.green('\n  [Success] Credentials saved successfully!\n'));
 }

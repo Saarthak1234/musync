@@ -9,6 +9,8 @@ const config = new Conf({
     setupComplete:  { type: 'boolean', default: false },
     spotifyUserId:  { type: 'string', default: '' },
     displayName:    { type: 'string', default: '' },
+    spotifyClientId:     { type: 'string', default: '' },
+    spotifyClientSecret: { type: 'string', default: '' },
   }
 })
 
@@ -36,6 +38,18 @@ export function getUserInfo() {
     id:          config.get('spotifyUserId'),
     displayName: config.get('displayName'),
   }
+}
+
+export function getAppCredentials() {
+  return {
+    clientId:     config.get('spotifyClientId'),
+    clientSecret: config.get('spotifyClientSecret'),
+  }
+}
+
+export function saveAppCredentials({ clientId, clientSecret }) {
+  config.set('spotifyClientId',     clientId)
+  config.set('spotifyClientSecret', clientSecret)
 }
 
 export function isTokenExpired() {

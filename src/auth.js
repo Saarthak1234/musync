@@ -7,8 +7,9 @@ import open from 'open'
 import 'dotenv/config'
 import {
   getTokens, saveTokens, saveUserInfo, clearAll,
-  isLoggedIn, getUserInfo
+  isLoggedIn, getUserInfo, getAppCredentials
 } from './config.js'
+import { checkSpotifyCredentials } from './setup.js'
 
 // open is an ESM package — handle gracefully
 let openBrowser
@@ -20,10 +21,11 @@ try {
 }
 
 function createSpotifyClient() {
+  const creds = getAppCredentials()
   return new SpotifyWebApi({
-    clientId:     process.env.SPOTIFY_CLIENT_ID,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-    redirectUri:  process.env.SPOTIFY_REDIRECT_URI,
+    clientId:     creds.clientId || process.env.SPOTIFY_CLIENT_ID,
+    clientSecret: creds.clientSecret || process.env.SPOTIFY_CLIENT_SECRET,
+    redirectUri:  'http://127.0.0.1:8888/callback', // We use callback since the user is setting that
   })
 }
 
@@ -37,6 +39,17 @@ export async function authCommand() {
     console.log(chalk.green(`\n  [Success] Already logged in as ${chalk.bold(displayName)}`))
     console.log(chalk.gray('  Run "musync logout" to switch accounts.\n'))
     return
+  }
+
+  const creds = getAppCredentials()
+  if (!creds.clientId && !process.env.SPOTIFY_CLIENT_ID) {
+    await checkSpotifyCredentials()
+    
+    // Check again, if they skipped the wizard we just return
+    const credsAfter = getAppCredentials()
+    if (!credsAfter.clientId && !process.env.SPOTIFY_CLIENT_ID) {
+      return
+    }
   }
 
   const spotify = createSpotifyClient()
