@@ -5,35 +5,7 @@ const CAT_COLORS = ['magenta', 'cyan', 'yellow', 'green', 'blue', 'red', 'white'
 
 const CAT_ANIMATIONS = {
   logo: [[]],
-  fire: [
-    [
-      "               (  .      )               ",
-      "           )           (              )  ",
-      "                 .  '   .   '  .  '  .   ",
-      "          (    , )       (.   )  (   ',  ",
-      "           .' ) ( . )    ,  ( ,     )   (",
-      "          ). , ( .   (  ) ( , ')  .' (  ,",
-      "         (_,) . ), ) _) _,')  (, ) '. )  "
-    ],
-    [
-      "               (         )               ",
-      "           )       .   (              )  ",
-      "                 .      .   '  .  '  .   ",
-      "          (    , )       (.   )  (   ',  ",
-      "           .' ) ( . )    ,  ( ,     )   (",
-      "          ). , ( .   (  ) ( , ')  .' (  ,",
-      "         (_,) . ), ) _) _,')  (, ) '. )  "
-    ],
-    [
-      "               (  .      )               ",
-      "           )           (      .       )  ",
-      "                 .  '   .      .  '  .   ",
-      "          (    , )       (.   )  (   ',  ",
-      "           .' ) ( . )    ,  ( ,     )   (",
-      "          ). , ( .   (  ) ( , ')  .' (  ,",
-      "         (_,) . ), ) _) _,')  (, ) '. )  "
-    ]
-  ],
+  fire: [[]],
   bop: [
     [
       "        ( meow... ) ",
@@ -211,9 +183,11 @@ export class TUI {
     process.stdout.write('\x1b[2J\x1b[H')
 
     const width = process.stdout.columns || 80
-    const separator = chalk.gray('='.repeat(Math.min(width, 60)))
+    const innerWidth = Math.max(40, width - 4)
+
+    const separator = chalk.gray('='.repeat(innerWidth))
     const centeredText = (text, rawLength = text.length) => {
-      const pad = Math.max(0, Math.floor((Math.min(width, 60) - rawLength) / 2))
+      const pad = Math.max(0, Math.floor((innerWidth - rawLength) / 2))
       return ' '.repeat(pad) + text
     }
 
@@ -229,7 +203,7 @@ export class TUI {
     console.log()
     
     // Progress Bar
-    const barWidth = 30
+    const barWidth = Math.max(20, innerWidth - 20)
     const filledCount = Math.floor((this.state.progressPercent / 100) * barWidth)
     const emptyCount = Math.max(0, barWidth - filledCount)
     const bar = chalk.green('=').repeat(filledCount) + chalk.gray('.').repeat(emptyCount)
@@ -261,21 +235,55 @@ export class TUI {
     console.log()
 
     // Animation
-    let frames = CAT_ANIMATIONS[this.animationType]
+    let frames = CAT_ANIMATIONS[this.animationType] || [[]]
     
     if (this.animationType === 'title') {
-      const displayTitle = this.state.title ? this.state.title.slice(0, 20) : 'Musync'
-      const asciiText = figlet.textSync(displayTitle, { font: 'Small', width: 60, whitespaceBreak: true })
+      const displayTitle = this.state.title ? this.state.title.slice(0, 30) : 'Musync'
+      const asciiText = figlet.textSync(displayTitle, { font: 'Small', width: innerWidth, whitespaceBreak: true })
       const lines = asciiText.split('\n').filter(l => l.trim().length > 0)
-      frames = [ lines, lines.map(l => ' ' + l) ] // slight bop effect
+      frames = [ lines, lines.map(l => ' ' + l) ]
     } else if (this.animationType === 'logo') {
-      const asciiText = figlet.textSync('Musync', { font: 'Slant', width: 60, whitespaceBreak: true })
+      const fontName = innerWidth > 80 ? 'Standard' : 'Slant'
+      const asciiText = figlet.textSync('Musync', { font: fontName, width: innerWidth, whitespaceBreak: true })
       const lines = asciiText.split('\n').filter(l => l.trim().length > 0)
-      frames = [ lines, lines.map(l => ' ' + l) ] // slight bop effect
+      frames = [ lines, lines.map(l => ' ' + l) ]
+    } else if (this.animationType === 'fire') {
+      if (!this.firePixels || this.fireWidth !== innerWidth - 4) {
+        this.fireWidth = Math.max(10, innerWidth - 4)
+        this.fireHeight = 12
+        this.firePixels = new Array(this.fireWidth * this.fireHeight).fill(0)
+      }
+      
+      for (let x = 0; x < this.fireWidth; x++) {
+        this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = Math.random() > 0.45 ? 12 : 2
+      }
+      
+      for (let x = 0; x < this.fireWidth; x++) {
+        for (let y = 0; y < this.fireHeight - 1; y++) {
+          const src = (y + 1) * this.fireWidth + x
+          const rand = Math.floor(Math.random() * 3)
+          const dst = src - this.fireWidth - rand + 1
+          if (dst >= 0 && dst < this.firePixels.length) {
+            this.firePixels[dst] = Math.max(0, this.firePixels[src] - (rand & 1))
+          }
+        }
+      }
+      
+      const fireChars = ' .,-~:;=!*#$@'
+      const fireLines = []
+      for (let y = 0; y < this.fireHeight - 1; y++) {
+        let line = ''
+        for (let x = 0; x < this.fireWidth; x++) {
+          const heat = this.firePixels[y * this.fireWidth + x]
+          line += fireChars[heat] || ' '
+        }
+        fireLines.push(line)
+      }
+      frames = [ fireLines ]
     }
 
     const currentFrame = frames[this.frameIndex % frames.length] || []
-    const currentColor = CAT_COLORS[this.colorIndex]
+    const currentColor = this.animationType === 'fire' ? 'red' : CAT_COLORS[this.colorIndex]
     
     currentFrame.forEach(line => {
       console.log(centeredText(chalk[currentColor](line), line.length))
