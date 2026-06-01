@@ -110,8 +110,14 @@ export async function searchCommand(query) {
               userQueue.pop()
             } else {
               const num = parseInt(queueItem, 10)
-              if (!isNaN(num) && num > 0 && num <= userQueue.length) {
+              if (!isNaN(num) && num > 0 && num <= userQueue.length && num.toString() === queueItem) {
                 userQueue.splice(num - 1, 1)
+              } else {
+                const lower = queueItem.toLowerCase()
+                const idx = userQueue.findIndex(q => q.toLowerCase().includes(lower))
+                if (idx !== -1) {
+                  userQueue.splice(idx, 1)
+                }
               }
             }
             tui.updateState({ userQueue: [...userQueue], commandInput: undefined })
