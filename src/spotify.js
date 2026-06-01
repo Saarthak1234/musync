@@ -152,6 +152,7 @@ export async function playCommand(playlistInput, options) {
     let nextCustomQuery = null // To hold a custom search query
     let isCommandMode = false
     let commandBuffer = ''
+    let userQueue = []
 
     const setupInput = () => {
       readline.emitKeypressEvents(process.stdin)
@@ -182,8 +183,22 @@ export async function playCommand(playlistInput, options) {
             currentIndex = targetIndex - 1
             stopCurrentStream()
           } else if (val.length > 0) {
-            nextCustomQuery = val
-            stopCurrentStream()
+            if (val.startsWith('+')) {
+              const queueItem = val.slice(1).trim()
+              if (queueItem) userQueue.push(queueItem)
+              tui.updateState({ commandInput: `Queued: ${queueItem}` })
+              setTimeout(() => {
+                if (!isCommandMode) {
+                  tui.updateState({ commandInput: undefined })
+                  tui.render()
+                }
+              }, 1500)
+            } else {
+              nextCustomQuery = val
+              stopCurrentStream()
+            }
+          } else {
+            tui.updateState({ commandInput: undefined })
           }
           tui.render()
         } else if (key.name === 'escape') {
@@ -252,7 +267,17 @@ export async function playCommand(playlistInput, options) {
       let query
       const track = queue[currentIndex]
       
-      if (nextCustomQuery) {
+      if (userQueue.length > 0) {
+        query = userQueue.shift()
+        tui.updateState({
+          title: `Custom Search: ${query}`,
+          artist: '',
+          nextTrack: track ? `${track.name} — ${track.artist}` : 'None',
+          playlistPosition: '',
+          coverLines: null
+        })
+        currentIndex-- 
+      } else if (nextCustomQuery) {
         query = nextCustomQuery
         tui.updateState({
           title: `Custom Search: ${query}`,
