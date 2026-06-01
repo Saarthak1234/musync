@@ -337,28 +337,39 @@ export class TUI {
       const hasAudio = this.state.audioIntensity !== undefined
       const audioPulse = hasAudio ? this.state.audioIntensity : 0
       
-      // Boost the intensity slightly for EQ so it looks active
-      const intensity = Math.min(1.0, Math.max(0.05, manualIntensity * 0.3 + audioPulse * 1.5))
+      // Multiply manual speed control against the raw audio pulse
+      const intensity = Math.min(1.0, audioPulse * (0.5 + manualIntensity * 1.5))
       
       for (let i = 0; i < numBars; i++) {
-        let target = 0
+        // Base target off the true global audio pulse!
+        // To make bands look independent, multiply the global pulse by a different, slowly changing wave for each band.
+        const waveSpeed = 0.2 + (i * 0.01) // Higher frequencies change faster
+        const wave1 = Math.sin(this.frameIndex * waveSpeed + i)
+        const wave2 = Math.cos(this.frameIndex * (waveSpeed * 1.5) - i * 0.5)
         
-        // Randomly update bars on beats
-        if (Math.random() > 0.2) {
-           // We use Math.pow(x, 2) to skew randomness so lower heights are much more common,
-           // leaving plenty of empty space and making the rare max spikes stand out!
-           const barRandomness = Math.pow(Math.random(), 2) 
-           const barIntensity = intensity * barRandomness * 1.6
-           target = barIntensity * maxHeight
-        }
+        // Combine waves for complex pseudo-randomness, normalized 0 to 1
+        const pseudoRandom = (wave1 + wave2 + 2) / 4.0 
+        
+        // Bass (left) reacts more to pure volume, Treble (right) reacts more to randomness
+        const freqType = i / numBars // 0.0 to 1.0
+        
+        // Apply a power curve to intensity to make it very subtle during low parts!
+        // This guarantees silence means flat bars, and beats mean massive spikes.
+        const subtleIntensity = Math.pow(intensity, 1.5) 
+        
+        // Left side (bass) is heavily influenced by pure intensity, right side is chaotic
+        const bandValue = subtleIntensity * ( (1 - freqType) * 0.7 + pseudoRandom * (0.3 + freqType) )
+        
+        // Multiply by 1.8 so it can occasionally reach the top during huge peaks
+        let target = bandValue * maxHeight * 1.8
         
         // Interpolate bar towards target
         if (this.eqBars[i] < target) {
           // Fast attack
-          this.eqBars[i] += (target - this.eqBars[i]) * 0.6
+          this.eqBars[i] += (target - this.eqBars[i]) * 0.7
         } else {
-          // Gravity decay (increased slightly for the taller height)
-          this.eqBars[i] -= 0.8 + (i * 0.02) // High bands fall slightly faster
+          // Gravity decay (high frequencies fall slightly faster)
+          this.eqBars[i] -= 0.6 + (freqType * 0.3)
         }
         this.eqBars[i] = Math.max(0, Math.min(maxHeight, this.eqBars[i]))
         
