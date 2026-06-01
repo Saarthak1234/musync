@@ -341,15 +341,15 @@ export class TUI {
       const intensity = Math.min(1.0, Math.max(0.05, manualIntensity * 0.3 + audioPulse * 1.5))
       
       for (let i = 0; i < numBars; i++) {
-        // Pseudo-random frequencies
-        const bandFreq = i / numBars
         let target = 0
         
-        // Left (bass) updates more often and jumps higher
-        if (Math.random() > bandFreq * 0.4) {
-           const wave = Math.sin(this.frameIndex * 0.2 + i * 0.5) * 0.5 + 0.5
-           const barIntensity = intensity * (0.3 + 0.7 * wave) * (0.4 + Math.random() * 0.6)
-           target = barIntensity * maxHeight * 1.3
+        // Randomly update bars on beats
+        if (Math.random() > 0.2) {
+           // Completely random height per bar, but scaled heavily by the global audio intensity!
+           // This guarantees they all jump on the beat, but each reaches a unique random height.
+           const barRandomness = Math.random() // 0.0 to 1.0 completely random
+           const barIntensity = intensity * barRandomness * 2.2
+           target = barIntensity * maxHeight
         }
         
         // Interpolate bar towards target
@@ -375,9 +375,9 @@ export class TUI {
         let line = ''
         for (let i = 0; i < numBars; i++) {
           if (this.eqBars[i] >= y) {
-            line += '█ ' // Solid bar
+            line += '▄ ' // Thinner solid bar
           } else if (Math.round(this.eqPeaks[i]) === y) {
-            line += '- ' // Floating peak dot
+            line += '_ ' // Thinner floating peak dot
           } else {
             line += '  ' // Empty space
           }
