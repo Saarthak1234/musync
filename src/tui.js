@@ -250,12 +250,12 @@ export class TUI {
     } else if (this.animationType === 'fire') {
       if (!this.firePixels || this.fireWidth !== innerWidth - 4) {
         this.fireWidth = Math.max(10, innerWidth - 4)
-        this.fireHeight = 12
+        this.fireHeight = 18
         this.firePixels = new Array(this.fireWidth * this.fireHeight).fill(0)
       }
       
       for (let x = 0; x < this.fireWidth; x++) {
-        this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = Math.random() > 0.45 ? 12 : 2
+        this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = Math.random() > 0.3 ? 12 : 3
       }
       
       for (let x = 0; x < this.fireWidth; x++) {
