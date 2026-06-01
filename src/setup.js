@@ -73,6 +73,14 @@ async function installYtDlp() {
       break
 
     case 'win32': {
+      if (isInstalled('winget')) {
+        try {
+          execSync('winget install -e --id yt-dlp.yt-dlp --accept-source-agreements --accept-package-agreements', { stdio: 'inherit' })
+          break
+        } catch {
+          // fallback
+        }
+      }
       const dir  = getLocalBinDir()
       const dest = path.join(dir, 'yt-dlp.exe')
       await downloadFile(
@@ -109,8 +117,16 @@ async function installFfmpeg() {
       break
 
     case 'win32':
+      if (isInstalled('winget')) {
+        try {
+          execSync('winget install -e --id Gyan.FFmpeg --accept-source-agreements --accept-package-agreements', { stdio: 'inherit' })
+          break
+        } catch (e) {
+          // fallback
+        }
+      }
       throw new Error(
-        'ffmpeg on Windows needs manual install. Download from: https://www.gyan.dev/ffmpeg/builds/ Then add it to your PATH.'
+        'ffmpeg on Windows needs manual install. Download from: https://www.gyan.dev/ffmpeg/builds/ Then add it to your PATH. (Or run: winget install Gyan.FFmpeg)'
       )
   }
 }

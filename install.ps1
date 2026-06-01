@@ -3,6 +3,7 @@
 # and configures the User PATH variable so you can run 'musync' from anywhere.
 
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 Write-Host "`n=== Installing Musync for Windows ===" -ForegroundColor Green
 
