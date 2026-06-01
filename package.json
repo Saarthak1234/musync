@@ -25,7 +25,6 @@
     "spotify-uri": "^4.1.0",
     "spotify-url-info": "^3.3.0",
     "spotify-web-api-node": "^5.0.2",
-    "terminal-image": "^4.3.0",
     "yt-dlp-wrap": "^2.3.12"
   }
 }

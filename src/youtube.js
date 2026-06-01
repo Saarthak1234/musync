@@ -2,7 +2,6 @@ import YTDlpWrapModule from 'yt-dlp-wrap'
 const YTDlpWrap = YTDlpWrapModule.default || YTDlpWrapModule
 import chalk from 'chalk'
 import ora from 'ora'
-import terminalImage from 'terminal-image'
 import { playStream } from './player.js'
 import { tui } from './tui.js'
 
@@ -26,7 +25,6 @@ export async function searchAndPlay(query, isStandalone = false) {
       `ytsearch1:${searchQuery}`,   
       '--get-title',
       '--get-url',
-      '--get-thumbnail',
       '--get-duration',       
       '-f', 'bestaudio/best', 
       '--no-playlist',
@@ -36,22 +34,7 @@ export async function searchAndPlay(query, isStandalone = false) {
     const lines     = output.trim().split('\n')
     const title     = lines[0]
     const streamUrl = lines[1]
-    const thumbnailUrl = lines[2]
-    const durationStr = lines[3]
-
-    // Fetch and process thumbnail asynchronously
-    if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
-      fetch(thumbnailUrl)
-        .then(res => res.arrayBuffer())
-        .then(async buffer => {
-          try {
-            const asciiImage = await terminalImage.buffer(Buffer.from(buffer), { width: 40 })
-            const coverLines = asciiImage.split('\n')
-            tui.updateState({ coverLines })
-          } catch (e) {}
-        })
-        .catch(() => {})
-    }
+    const durationStr = lines[2]
 
     let durationInSeconds = 0
     if (durationStr) {
@@ -73,7 +56,7 @@ export async function searchAndPlay(query, isStandalone = false) {
     if (spinner) spinner.stop()
     
     if (!isStandalone) {
-      tui.updateState({ title, artist: '', coverLines: null })
+      tui.updateState({ title, artist: '' })
       tui.render()
     } else {
       console.log(chalk.green(`\n  Playing: `) + chalk.white(`${title}\n`))
@@ -96,6 +79,7 @@ export async function searchCommand(query) {
   let commandBuffer = ''
   let currentQuery = query
   let nextQuery = null
+  let userQueue = []
 
   readline.emitKeypressEvents(process.stdin)
   if (process.stdin.isTTY) process.stdin.setRawMode(true)
@@ -107,12 +91,26 @@ export async function searchCommand(query) {
     if (isCommandMode) {
       if (key.name === 'return' || key.name === 'enter') {
         isCommandMode = false
-        tui.updateState({ commandInput: undefined })
         const val = commandBuffer.trim()
         
         if (val.length > 0) {
-          nextQuery = val
-          stopCurrentStream()
+          if (val.startsWith('+')) {
+            const queueItem = val.slice(1).trim()
+            if (queueItem) userQueue.push(queueItem)
+            tui.updateState({ commandInput: `Queued: ${queueItem}` })
+            setTimeout(() => {
+              if (!isCommandMode) {
+                tui.updateState({ commandInput: undefined })
+                tui.render()
+              }
+            }, 1500)
+          } else {
+            tui.updateState({ commandInput: undefined })
+            nextQuery = val
+            stopCurrentStream()
+          }
+        } else {
+          tui.updateState({ commandInput: undefined })
         }
         tui.render()
       } else if (key.name === 'escape') {
@@ -182,6 +180,8 @@ export async function searchCommand(query) {
     if (nextQuery) {
       currentQuery = nextQuery
       nextQuery = null
+    } else if (userQueue.length > 0) {
+      currentQuery = userQueue.shift()
     } else {
       break
     }

@@ -121,8 +121,7 @@ const CAT_ANIMATIONS = {
       " ------------------"
     ]
   ],
-  title: [[]],
-  cover: [[]]
+  title: [[]]
 }
 
 export class TUI {
@@ -227,24 +226,13 @@ export class TUI {
       const asciiText = figlet.textSync(displayTitle, { font: 'Small', width: 60, whitespaceBreak: true })
       const lines = asciiText.split('\n').filter(l => l.trim().length > 0)
       frames = [ lines, lines.map(l => ' ' + l) ] // slight bop effect
-    } else if (this.animationType === 'cover') {
-      if (this.state.coverLines) {
-        frames = [ this.state.coverLines, this.state.coverLines ] // static cover
-      } else {
-        frames = [ ['Loading cover art...'], ['Loading cover art... '] ]
-      }
     }
 
     const currentFrame = frames[this.frameIndex % frames.length] || []
     const currentColor = CAT_COLORS[this.colorIndex]
     
     currentFrame.forEach(line => {
-      if (this.animationType === 'cover' && this.state.coverLines) {
-        // Don't apply chalk color to terminal-image output since it has its own ANSI
-        console.log(centeredText(line, line.replace(/\x1b\[.*?m/g, '').length))
-      } else {
-        console.log(centeredText(chalk[currentColor](line), line.length))
-      }
+      console.log(centeredText(chalk[currentColor](line), line.length))
     })
 
     if (!this.state.isPaused) {
