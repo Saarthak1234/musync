@@ -254,11 +254,20 @@ export class TUI {
         this.firePixels = new Array(this.fireWidth * this.fireHeight).fill(0)
       }
       
-      // The user controls this.animationSpeed (1 to 10)
-      // We map this speed to the overall intensity, height, and density of the fire!
-      const speedNorm = Math.min(1.0, this.animationSpeed / 10.0)
+      // The user controls this.animationSpeed (1 is FAST, 10 is SLOW)
+      const manualIntensity = 1.0 - ((this.animationSpeed - 1) / 9.0)
+      
+      // TRUE AUTOMATED AUDIO REACTIVITY!
+      // ffplay streams real-time RMS volume into this.state.audioIntensity
+      const hasAudio = this.state.audioIntensity !== undefined
+      const audioPulse = hasAudio ? this.state.audioIntensity : 0
+      
+      // Combine manual baseline with real-time audio volume!
+      const speedNorm = Math.min(1.0, Math.max(0.1, manualIntensity * 0.3 + audioPulse * 1.5))
+      
       const beatPhase = (this.frameIndex * this.animationSpeed) % 24
-      const isBeat = beatPhase < 3
+      // Automatically detect beats based on loud volume spikes, fallback to manual cycle if silent
+      const isBeat = hasAudio ? (audioPulse > 0.4) : (beatPhase < 3)
       
       for (let x = 0; x < this.fireWidth; x++) {
         let rand = Math.random()

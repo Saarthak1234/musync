@@ -34,6 +34,7 @@ function startFfplay(url, startTime) {
     '-nodisp',
     '-autoexit',
     '-loglevel', 'info', // Use info to get stderr progress logs
+    '-af', 'astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.RMS_level',
     '-reconnect', '1',
     '-reconnect_streamed', '1',
     '-reconnect_delay_max', '5'
@@ -55,8 +56,26 @@ function startFfplay(url, startTime) {
     if (isPaused) return;
 
     const str = data.toString();
-    const chunks = str.split('\r');
+    const chunks = str.split(/[\r\n]+/);
     for (const chunk of chunks) {
+      // Audio amplitude matching
+      const rmsMatch = chunk.match(/lavfi\.astats\.Overall\.RMS_level=([-\d.]+)/);
+      if (rmsMatch) {
+        const rms = parseFloat(rmsMatch[1]);
+        if (!isNaN(rms) && isFinite(rms)) {
+          // Normalize RMS (-60 is usually silent, 0 is max)
+          // We map it to an intensity 0.0 to 1.0, and apply an exponent to make beats pop
+          let intensity = (rms + 60) / 60;
+          intensity = Math.max(0, Math.min(1, intensity));
+          // Apply a power curve so loud sounds spike heavily, quiet sounds are low
+          const peakIntensity = Math.pow(intensity, 4);
+          tui.updateState({ audioIntensity: peakIntensity });
+        } else {
+          tui.updateState({ audioIntensity: 0 }); // -inf or silence
+        }
+      }
+
+      // Time progression matching
       const match = chunk.match(/\s*(\d+\.\d+)\s+M-A:/) || chunk.match(/\s*(\d+\.\d+)\s+A-V:/);
       if (match && totalDuration > 0) {
         const currentSeconds = parseFloat(match[1]);
