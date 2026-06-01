@@ -250,12 +250,12 @@ export class TUI {
     } else if (this.animationType === 'fire') {
       if (!this.firePixels || this.fireWidth !== innerWidth - 4) {
         this.fireWidth = Math.max(10, innerWidth - 4)
-        this.fireHeight = 18
+        this.fireHeight = 26
         this.firePixels = new Array(this.fireWidth * this.fireHeight).fill(0)
       }
       
       for (let x = 0; x < this.fireWidth; x++) {
-        this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = Math.random() > 0.3 ? 12 : 3
+        this.firePixels[(this.fireHeight - 1) * this.fireWidth + x] = Math.random() > 0.15 ? 12 : (Math.random() > 0.5 ? 11 : 4)
       }
       
       for (let x = 0; x < this.fireWidth; x++) {
@@ -264,7 +264,11 @@ export class TUI {
           const rand = Math.floor(Math.random() * 3)
           const dst = src - this.fireWidth - rand + 1
           if (dst >= 0 && dst < this.firePixels.length) {
-            this.firePixels[dst] = Math.max(0, this.firePixels[src] - (rand & 1))
+            let decay = rand & 1
+            if (Math.random() < (1 - y / this.fireHeight) * 0.7) {
+              decay += 1
+            }
+            this.firePixels[dst] = Math.max(0, this.firePixels[src] - decay)
           }
         }
       }
