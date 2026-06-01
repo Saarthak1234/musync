@@ -97,13 +97,24 @@ export async function searchCommand(query) {
           if (val.startsWith('+')) {
             const queueItem = val.slice(1).trim()
             if (queueItem) userQueue.push(queueItem)
-            tui.updateState({ commandInput: `Queued: ${queueItem}` })
+            tui.updateState({ userQueue: [...userQueue], commandInput: `Queued: ${queueItem}` })
             setTimeout(() => {
               if (!isCommandMode) {
                 tui.updateState({ commandInput: undefined })
                 tui.render()
               }
             }, 1500)
+          } else if (val.startsWith('-')) {
+            const queueItem = val.slice(1).trim()
+            if (!queueItem) {
+              userQueue.pop()
+            } else {
+              const num = parseInt(queueItem, 10)
+              if (!isNaN(num) && num > 0 && num <= userQueue.length) {
+                userQueue.splice(num - 1, 1)
+              }
+            }
+            tui.updateState({ userQueue: [...userQueue], commandInput: undefined })
           } else {
             tui.updateState({ commandInput: undefined })
             nextQuery = val
@@ -182,6 +193,7 @@ export async function searchCommand(query) {
       nextQuery = null
     } else if (userQueue.length > 0) {
       currentQuery = userQueue.shift()
+      tui.updateState({ userQueue: [...userQueue] })
     } else {
       break
     }

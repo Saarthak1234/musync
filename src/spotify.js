@@ -186,13 +186,24 @@ export async function playCommand(playlistInput, options) {
             if (val.startsWith('+')) {
               const queueItem = val.slice(1).trim()
               if (queueItem) userQueue.push(queueItem)
-              tui.updateState({ commandInput: `Queued: ${queueItem}` })
+              tui.updateState({ userQueue: [...userQueue], commandInput: `Queued: ${queueItem}` })
               setTimeout(() => {
                 if (!isCommandMode) {
                   tui.updateState({ commandInput: undefined })
                   tui.render()
                 }
               }, 1500)
+            } else if (val.startsWith('-')) {
+              const queueItem = val.slice(1).trim()
+              if (!queueItem) {
+                userQueue.pop()
+              } else {
+                const num = parseInt(queueItem, 10)
+                if (!isNaN(num) && num > 0 && num <= userQueue.length) {
+                  userQueue.splice(num - 1, 1)
+                }
+              }
+              tui.updateState({ userQueue: [...userQueue], commandInput: undefined })
             } else {
               nextCustomQuery = val
               stopCurrentStream()
@@ -274,7 +285,7 @@ export async function playCommand(playlistInput, options) {
           artist: '',
           nextTrack: track ? `${track.name} — ${track.artist}` : 'None',
           playlistPosition: '',
-          coverLines: null
+          userQueue: [...userQueue]
         })
         currentIndex-- 
       } else if (nextCustomQuery) {

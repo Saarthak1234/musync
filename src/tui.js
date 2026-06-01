@@ -209,12 +209,24 @@ export class TUI {
     console.log(`  [${bar}]`)
     console.log()
 
-    if (this.state.nextTrack) {
-      console.log(chalk.gray(`  Up Next: ${this.state.nextTrack}`))
+    let upNext = this.state.nextTrack
+    if (this.state.userQueue && this.state.userQueue.length > 0) {
+      upNext = this.state.userQueue[0]
+    }
+
+    if (upNext) {
+      console.log(chalk.gray(`  Up Next: ${upNext}`))
     } else {
       console.log()
     }
     
+    if (this.state.userQueue && this.state.userQueue.length > 0) {
+      console.log(chalk.cyan(`\n  Queue:`))
+      this.state.userQueue.forEach((item, i) => {
+        console.log(chalk.cyan(`    ${i + 1}. ${item}`))
+      })
+    }
+
     console.log()
     console.log(separator)
     console.log()
