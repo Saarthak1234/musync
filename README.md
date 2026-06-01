@@ -34,10 +34,17 @@ curl -sL https://raw.githubusercontent.com/Saarthak1234/musync/main/install.sh |
 *(You may be prompted for your password to copy the binary globally and to install ffmpeg/yt-dlp automatically)*.
 
 ### Method 2: The One-Line Installer (Windows)
-The easiest way to install Musync globally on Windows. Open **PowerShell** and paste this command:
-```powershell
-irm https://raw.githubusercontent.com/Saarthak1234/musync/main/install.ps1 | iex
-```
+The easiest way to install Musync globally on Windows.
+
+* **Option A: If using PowerShell:**
+  ```powershell
+  irm https://raw.githubusercontent.com/Saarthak1234/musync/main/install.ps1 | iex
+  ```
+
+* **Option B: If using standard Command Prompt (cmd.exe):**
+  ```cmd
+  powershell -Command "irm https://raw.githubusercontent.com/Saarthak1234/musync/main/install.ps1 | iex"
+  ```
 *(This automatically downloads the latest compiled binary, creates a safe home folder, and sets up your User PATH environment variables automatically)*.
 
 ### Method 3: Manual Binary Download
