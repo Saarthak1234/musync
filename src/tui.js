@@ -345,10 +345,10 @@ export class TUI {
         
         // Randomly update bars on beats
         if (Math.random() > 0.2) {
-           // Completely random height per bar, but scaled heavily by the global audio intensity!
-           // This guarantees they all jump on the beat, but each reaches a unique random height.
-           const barRandomness = Math.random() // 0.0 to 1.0 completely random
-           const barIntensity = intensity * barRandomness * 2.2
+           // We use Math.pow(x, 2) to skew randomness so lower heights are much more common,
+           // leaving plenty of empty space and making the rare max spikes stand out!
+           const barRandomness = Math.pow(Math.random(), 2) 
+           const barIntensity = intensity * barRandomness * 1.6
            target = barIntensity * maxHeight
         }
         
@@ -375,9 +375,9 @@ export class TUI {
         let line = ''
         for (let i = 0; i < numBars; i++) {
           if (this.eqBars[i] >= y) {
-            line += '▄ ' // Thinner solid bar
+            line += '_ ' // The thinnest possible bar (sits at bottom of character cell)
           } else if (Math.round(this.eqPeaks[i]) === y) {
-            line += '_ ' // Thinner floating peak dot
+            line += '- ' // Peak floating slightly above the baseline
           } else {
             line += '  ' // Empty space
           }
