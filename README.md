@@ -9,8 +9,8 @@ Musync features an interactive CLI that gives you total control of your playback
 - **Zero-Setup Playback:** Paste any public Spotify Playlist URL to start playing immediately—no Spotify account or login required.
 - **Optional Spotify Login:** Connect your own Spotify Developer App to securely fetch and play your private playlists by name.
 - **Auto Dependency Management:** A smart setup wizard automatically installs yt-dlp and ffmpeg so you don't have to configure anything manually.
-- **Interactive Playback UI:** Lists all your tracks and displays an accurate real-time progress bar synced to the audio engine.
-- **Command Mode (Jump & Search):** Press `/` during playback to instantly jump to another track number or type a custom song name to play it mid-playlist.
+- **Interactive Playback UI:** Experience a fully dynamic Terminal UI that scales to your window width. Features a synchronized progress bar, real-time "Up Next" queue display, and a suite of interactive ASCII animations including a procedural fire visualizer that automatically reacts to the audio volume.
+- **Advanced Command Mode:** Press `/` during playback to instantly jump to another track, search for a custom song, or manage your active playback queue by adding (`+`) or removing (`-`) tracks.
 - **Standalone Binaries:** Download a single executable file and run it. No Node.js, npm, or npm install required.
 
 ## Spotify Modes & Limitations
@@ -88,11 +88,24 @@ Start playing a specific playlist by name from your connected Spotify account.
 musync play "My Awesome Playlist"
 ```
 
-**Interactive Prompt:** 
-When you run the play command, you will see a list of all tracks. You can then:
+**Initial Playlist Prompt:** 
+When you run the play command for a playlist, you will see a list of all tracks. You can then:
 - Enter a specific **track number** to start playing from that song.
 - Type `shuffle` (or `s`) to randomly shuffle the tracks.
 - Press **Enter** to play normally from the beginning.
+
+**Interactive Playback Controls:**
+Once the player starts, you can control playback directly using your keyboard:
+- **Spacebar:** Pause or resume playback.
+- **c:** Cycle through different ASCII animations (Musync Logo, Fire, Cats, Developer Tools, Dynamic Track Title).
+- **v:** Change the accent color of the ASCII animations.
+- **+ / -:** Adjust the baseline speed and intensity of the ASCII animations.
+
+**Command Mode (Queue & Search):**
+Press `/` at any time during playback to open the command input prompt.
+- **Jump/Search:** Type a number to jump to a playlist track, or type a song name to immediately interrupt playback and stream it.
+- **Add to Queue:** Type `+ [song name]` to add a specific track to the "Up Next" queue. The queue works in both playlist mode and standalone search mode.
+- **Remove from Queue:** Type `- [queue number]` or `- [song name]` to remove a track from the queue. Type just `-` to quickly remove the last added track.
 
 ## How It Works
 1. Musync scrapes public Spotify URLs using `spotify-url-info` (or uses the Spotify API for private authenticated requests) to extract track names.
