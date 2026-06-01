@@ -341,35 +341,27 @@ export class TUI {
       const intensity = Math.min(1.0, audioPulse * (0.5 + manualIntensity * 1.5))
       
       for (let i = 0; i < numBars; i++) {
-        // Base target off the true global audio pulse!
-        // To make bands look independent, multiply the global pulse by a different, slowly changing wave for each band.
-        const waveSpeed = 0.2 + (i * 0.01) // Higher frequencies change faster
-        const wave1 = Math.sin(this.frameIndex * waveSpeed + i)
-        const wave2 = Math.cos(this.frameIndex * (waveSpeed * 1.5) - i * 0.5)
+        let target = 0
         
-        // Combine waves for complex pseudo-randomness, normalized 0 to 1
-        const pseudoRandom = (wave1 + wave2 + 2) / 4.0 
-        
-        // Bass (left) reacts more to pure volume, Treble (right) reacts more to randomness
-        const freqType = i / numBars // 0.0 to 1.0
-        
-        // Apply a power curve to intensity to make it very subtle during low parts!
-        // This guarantees silence means flat bars, and beats mean massive spikes.
-        const subtleIntensity = Math.pow(intensity, 1.5) 
-        
-        // Left side (bass) is heavily influenced by pure intensity, right side is chaotic
-        const bandValue = subtleIntensity * ( (1 - freqType) * 0.7 + pseudoRandom * (0.3 + freqType) )
-        
-        // Multiply by 1.8 so it can occasionally reach the top during huge peaks
-        let target = bandValue * maxHeight * 1.8
+        // Only jump occasionally so they look distinct and not like a solid wall
+        if (Math.random() > 0.4) { 
+           // Skew the random height heavily towards the bottom so it doesn't overshoot
+           const barRandomness = Math.pow(Math.random(), 3) // 0 to 1, heavily weighted towards the bottom
+           
+           // Boost the bass on the left side slightly
+           const bassBoost = 1.0 + ((numBars - i) / numBars) * 0.4
+           
+           // Calculate target based on raw intensity and randomness
+           target = intensity * barRandomness * bassBoost * maxHeight * 1.4
+        }
         
         // Interpolate bar towards target
         if (this.eqBars[i] < target) {
-          // Fast attack
-          this.eqBars[i] += (target - this.eqBars[i]) * 0.7
+          // Extremely fast attack
+          this.eqBars[i] += (target - this.eqBars[i]) * 0.8
         } else {
-          // Gravity decay (high frequencies fall slightly faster)
-          this.eqBars[i] -= 0.6 + (freqType * 0.3)
+          // Gravity decay
+          this.eqBars[i] -= 0.6 + (i * 0.01) // High bands fall slightly faster
         }
         this.eqBars[i] = Math.max(0, Math.min(maxHeight, this.eqBars[i]))
         
