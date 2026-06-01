@@ -130,6 +130,7 @@ const CAT_ANIMATIONS = {
 export class TUI {
   constructor() {
     this.animationType = 'logo' // default
+    this.lastAnimationType = 'logo'
     this.colorIndex = 0
     this.animationSpeed = 2
     this.frameIndex = 0
@@ -180,6 +181,19 @@ export class TUI {
   }
 
   render() {
+    // Apply animation-specific default colors dynamically on transition
+    if (this.animationType !== this.lastAnimationType) {
+      if (this.animationType === 'fire'){
+        this.colorIndex = 5 // Default to red
+        this.animationSpeed = 6
+      } 
+      if (this.animationType === 'eq'){
+        this.colorIndex = 3 // Default to green
+        this.animationSpeed = 9
+      }    
+      this.lastAnimationType = this.animationType
+    }
+
     // Clear screen and move cursor to top left
     process.stdout.write('\x1b[2J\x1b[H')
 
