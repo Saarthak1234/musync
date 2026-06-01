@@ -287,7 +287,7 @@ export class TUI {
     }
 
     const currentFrame = frames[this.frameIndex % frames.length] || []
-    const currentColor = this.animationType === 'fire' ? 'red' : CAT_COLORS[this.colorIndex]
+    const currentColor = CAT_COLORS[this.colorIndex]
     
     currentFrame.forEach(line => {
       console.log(centeredText(chalk[currentColor](line), line.length))
