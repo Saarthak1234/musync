@@ -17,6 +17,7 @@
     "commander": "^12.0.0",
     "conf": "^13.0.0",
     "dotenv": "^16.4.0",
+    "figlet": "^1.11.0",
     "inquirer": "^9.2.0",
     "inquirer-autocomplete-prompt": "^3.0.1",
     "open": "^11.0.0",
@@ -24,6 +25,7 @@
     "spotify-uri": "^4.1.0",
     "spotify-url-info": "^3.3.0",
     "spotify-web-api-node": "^5.0.2",
+    "terminal-image": "^4.3.0",
     "yt-dlp-wrap": "^2.3.12"
   }
 }

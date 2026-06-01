@@ -258,7 +258,8 @@ export async function playCommand(playlistInput, options) {
           title: `Custom Search: ${query}`,
           artist: '',
           nextTrack: track ? `${track.name} — ${track.artist}` : 'None',
-          playlistPosition: ''
+          playlistPosition: '',
+          coverLines: null
         })
         currentIndex-- 
         nextCustomQuery = null
@@ -270,7 +271,8 @@ export async function playCommand(playlistInput, options) {
           title: track.name,
           artist: track.artist,
           nextTrack: next ? `${next.name} — ${next.artist}` : 'None',
-          playlistPosition: `[${originalNumber}/${queue.length}]`
+          playlistPosition: `[${originalNumber}/${queue.length}]`,
+          coverLines: null
         })
       }
 

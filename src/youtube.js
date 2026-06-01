@@ -2,6 +2,7 @@ import YTDlpWrapModule from 'yt-dlp-wrap'
 const YTDlpWrap = YTDlpWrapModule.default || YTDlpWrapModule
 import chalk from 'chalk'
 import ora from 'ora'
+import terminalImage from 'terminal-image'
 import { playStream } from './player.js'
 import { tui } from './tui.js'
 
@@ -23,8 +24,9 @@ export async function searchAndPlay(query, isStandalone = false) {
   try {
     const output = await ytDlp.execPromise([
       `ytsearch1:${searchQuery}`,   
-      '--get-url',            
-      '--get-title',          
+      '--get-title',
+      '--get-url',
+      '--get-thumbnail',
       '--get-duration',       
       '-f', 'bestaudio/best', 
       '--no-playlist',
@@ -34,7 +36,22 @@ export async function searchAndPlay(query, isStandalone = false) {
     const lines     = output.trim().split('\n')
     const title     = lines[0]
     const streamUrl = lines[1]
-    const durationStr = lines[2]
+    const thumbnailUrl = lines[2]
+    const durationStr = lines[3]
+
+    // Fetch and process thumbnail asynchronously
+    if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
+      fetch(thumbnailUrl)
+        .then(res => res.arrayBuffer())
+        .then(async buffer => {
+          try {
+            const asciiImage = await terminalImage.buffer(Buffer.from(buffer), { width: 40 })
+            const coverLines = asciiImage.split('\n')
+            tui.updateState({ coverLines })
+          } catch (e) {}
+        })
+        .catch(() => {})
+    }
 
     let durationInSeconds = 0
     if (durationStr) {
@@ -56,10 +73,10 @@ export async function searchAndPlay(query, isStandalone = false) {
     if (spinner) spinner.stop()
     
     if (!isStandalone) {
-      tui.updateState({ title, artist: '' })
+      tui.updateState({ title, artist: '', coverLines: null })
       tui.render()
     } else {
-      console.log(chalk.gray(`  ▶ ${title}`))
+      console.log(chalk.green(`\n  Playing: `) + chalk.white(`${title}\n`))
     }
 
     await playStream(streamUrl, durationInSeconds)

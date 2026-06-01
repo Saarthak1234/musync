@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import figlet from 'figlet'
 
 const CAT_COLORS = ['magenta', 'cyan', 'yellow', 'green', 'blue', 'red', 'white']
 
@@ -119,7 +120,9 @@ const CAT_ANIMATIONS = {
       " |___/_/ \\_\\___/_||_|",
       " ------------------"
     ]
-  ]
+  ],
+  title: [[]],
+  cover: [[]]
 }
 
 export class TUI {
@@ -217,17 +220,36 @@ export class TUI {
     console.log()
 
     // Animation
-    const frames = CAT_ANIMATIONS[this.animationType]
-    const currentFrame = frames[this.frameIndex]
+    let frames = CAT_ANIMATIONS[this.animationType]
+    
+    if (this.animationType === 'title') {
+      const displayTitle = this.state.title ? this.state.title.slice(0, 20) : 'Musync'
+      const asciiText = figlet.textSync(displayTitle, { font: 'Small', width: 60, whitespaceBreak: true })
+      const lines = asciiText.split('\n').filter(l => l.trim().length > 0)
+      frames = [ lines, lines.map(l => ' ' + l) ] // slight bop effect
+    } else if (this.animationType === 'cover') {
+      if (this.state.coverLines) {
+        frames = [ this.state.coverLines, this.state.coverLines ] // static cover
+      } else {
+        frames = [ ['Loading cover art...'], ['Loading cover art... '] ]
+      }
+    }
+
+    const currentFrame = frames[this.frameIndex % frames.length] || []
     const currentColor = CAT_COLORS[this.colorIndex]
     
     currentFrame.forEach(line => {
-      console.log(centeredText(chalk[currentColor](line), line.length))
+      if (this.animationType === 'cover' && this.state.coverLines) {
+        // Don't apply chalk color to terminal-image output since it has its own ANSI
+        console.log(centeredText(line, line.replace(/\x1b\[.*?m/g, '').length))
+      } else {
+        console.log(centeredText(chalk[currentColor](line), line.length))
+      }
     })
 
     if (!this.state.isPaused) {
       this.frameCount++
-      if (this.frameCount % this.animationSpeed === 0) {
+      if (this.frameCount % this.animationSpeed === 0 && frames.length > 0) {
         this.frameIndex = (this.frameIndex + 1) % frames.length
       }
     }
