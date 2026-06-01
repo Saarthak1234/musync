@@ -201,8 +201,8 @@ export class TUI {
       this.lastAnimationType = this.animationType
     }
 
-    // Clear screen and move cursor to top left
-    process.stdout.write('\x1b[2J\x1b[H')
+    // Use double buffering and only clear from cursor to end to prevent flickering!
+    const out = ['\x1b[H']
 
     const width = process.stdout.columns || 80
     const innerWidth = Math.max(40, width - 4)
@@ -213,16 +213,16 @@ export class TUI {
       return ' '.repeat(pad) + text
     }
 
-    console.log(separator)
-    console.log(centeredText(chalk.bold.green('MUSYNC PLAYER'), 13))
-    console.log(separator)
-    console.log()
+    out.push(separator)
+    out.push(centeredText(chalk.bold.green('MUSYNC PLAYER'), 13))
+    out.push(separator)
+    out.push('')
     
     // Track Info
     const pos = this.state.playlistPosition ? ` ${chalk.magenta(this.state.playlistPosition)}` : ''
-    console.log(chalk.cyan(`  Currently Playing${pos}:`))
-    console.log(`  ${chalk.bold(this.state.title)} ${this.state.artist ? chalk.gray('— ' + this.state.artist) : ''}`)
-    console.log()
+    out.push(chalk.cyan(`  Currently Playing${pos}:`))
+    out.push(`  ${chalk.bold(this.state.title)} ${this.state.artist ? chalk.gray('— ' + this.state.artist) : ''}`)
+    out.push('')
     
     // Progress Bar
     const barWidth = Math.max(20, innerWidth - 20)
@@ -230,9 +230,9 @@ export class TUI {
     const emptyCount = Math.max(0, barWidth - filledCount)
     const bar = chalk.green('=').repeat(filledCount) + chalk.gray('.').repeat(emptyCount)
     
-    console.log(`  [${this.state.timeString}]`)
-    console.log(`  [${bar}]`)
-    console.log()
+    out.push(`  [${this.state.timeString}]`)
+    out.push(`  [${bar}]`)
+    out.push('')
 
     let upNext = this.state.nextTrack
     if (this.state.userQueue && this.state.userQueue.length > 0) {
@@ -240,21 +240,21 @@ export class TUI {
     }
 
     if (upNext) {
-      console.log(chalk.gray(`  Up Next: ${upNext}`))
+      out.push(chalk.gray(`  Up Next: ${upNext}`))
     } else {
-      console.log()
+      out.push('')
     }
     
     if (this.state.userQueue && this.state.userQueue.length > 0) {
-      console.log(chalk.cyan(`\n  Queue:`))
+      out.push(chalk.cyan(`\n  Queue:`))
       this.state.userQueue.forEach((item, i) => {
-        console.log(chalk.cyan(`    ${i + 1}. ${item}`))
+        out.push(chalk.cyan(`    ${i + 1}. ${item}`))
       })
     }
 
-    console.log()
-    console.log(separator)
-    console.log()
+    out.push('')
+    out.push(separator)
+    out.push('')
 
     // Animation
     let frames = CAT_ANIMATIONS[this.animationType] || [[]]
@@ -415,7 +415,7 @@ export class TUI {
     const currentColor = CAT_COLORS[this.colorIndex]
     
     currentFrame.forEach(line => {
-      console.log(centeredText(chalk[currentColor](line), line.length))
+      out.push(centeredText(chalk[currentColor](line), line.length))
     })
 
     if (!this.state.isPaused) {
@@ -425,14 +425,20 @@ export class TUI {
       }
     }
 
-    console.log()
-    console.log(separator)
+    out.push('')
+    out.push(separator)
     if (this.state.commandInput !== undefined) {
-      console.log(chalk.bold.yellow('  Search or jump to track: ') + this.state.commandInput + chalk.bgWhite(' '))
+      out.push(chalk.bold.yellow('  Search or jump to track: ') + this.state.commandInput + chalk.bgWhite(' '))
     } else {
-      console.log(chalk.gray('  Controls: [Space] Pause  [n/p] Next/Prev  [c/v] Cat/Color  [+/-] Speed  [q] Quit  [/] Search'))
+      out.push(chalk.gray('  Controls: [Space] Pause  [n/p] Next/Prev  [c/v] Cat/Color  [+/-] Speed  [q] Quit  [/] Search'))
     }
-    console.log(separator)
+    out.push(separator)
+    
+    // Clear to end of screen to erase trailing output if the new frame is shorter
+    out.push('\x1b[J')
+    
+    // Flush the entire buffered frame exactly once!
+    process.stdout.write(out.join('\n') + '\n')
   }
 }
 
