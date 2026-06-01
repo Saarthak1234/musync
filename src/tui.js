@@ -121,7 +121,8 @@ const CAT_ANIMATIONS = {
       " ------------------"
     ]
   ],
-  title: [[]]
+  title: [[]],
+  logo: [[]]
 }
 
 export class TUI {
@@ -224,6 +225,10 @@ export class TUI {
     if (this.animationType === 'title') {
       const displayTitle = this.state.title ? this.state.title.slice(0, 20) : 'Musync'
       const asciiText = figlet.textSync(displayTitle, { font: 'Small', width: 60, whitespaceBreak: true })
+      const lines = asciiText.split('\n').filter(l => l.trim().length > 0)
+      frames = [ lines, lines.map(l => ' ' + l) ] // slight bop effect
+    } else if (this.animationType === 'logo') {
+      const asciiText = figlet.textSync('Musync', { font: 'Slant', width: 60, whitespaceBreak: true })
       const lines = asciiText.split('\n').filter(l => l.trim().length > 0)
       frames = [ lines, lines.map(l => ' ' + l) ] // slight bop effect
     }
