@@ -7,7 +7,7 @@ import readline from 'readline'
 inquirer.registerPrompt('autocomplete', inquirerAutocompletePrompt)
 import { getAuthenticatedClient } from './auth.js'
 import { searchAndPlay } from './youtube.js'
-import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
+import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream, toggleLoop, getIsLooping } from './player.js'
 import { tui } from './tui.js'
 
 import spotifyUrlInfo from 'spotify-url-info'
@@ -181,7 +181,7 @@ export async function playCommand(playlistInput, options) {
             const targetTrack = tracks[num - 1]
             const targetIndex = queue.indexOf(targetTrack)
             currentIndex = targetIndex - 1
-            stopCurrentStream()
+            stopCurrentStream(true)
           } else if (val.length > 0) {
             if (val.startsWith('+')) {
               const queueItem = val.slice(1).trim()
@@ -212,7 +212,7 @@ export async function playCommand(playlistInput, options) {
               tui.updateState({ userQueue: [...userQueue], commandInput: undefined })
             } else {
               nextCustomQuery = val
-              stopCurrentStream()
+              stopCurrentStream(true)
             }
           } else {
             tui.updateState({ commandInput: undefined })
@@ -240,7 +240,9 @@ export async function playCommand(playlistInput, options) {
       } else if (key.name === 'n' || key.name === 'right') {
         stopCurrentStream() 
       } else if (key.name === 'p' || key.name === 'left') {
-        currentIndex = Math.max(-1, currentIndex - 2) 
+        if (!getIsLooping()) {
+          currentIndex = Math.max(-1, currentIndex - 2) 
+        }
         stopCurrentStream()
       } else if (key.name === 's' || key.name === 'space') {
         if (isPaused) {
@@ -266,6 +268,8 @@ export async function playCommand(playlistInput, options) {
       } else if (str === '-' || str === '_') {
         tui.decreaseSpeed()
         tui.render()
+      } else if (key.name === 'l') {
+        toggleLoop()
       } else if (str === '/' || key.name === '/') {
         isCommandMode = true
         commandBuffer = ''

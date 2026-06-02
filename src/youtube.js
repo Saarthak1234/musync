@@ -64,12 +64,17 @@ export async function searchAndPlay(query, isStandalone = false) {
 
     await playStream(streamUrl, durationInSeconds)
   } catch (err) {
-    spinner.fail(chalk.red(`  YouTube error: ${err.message}`))
+    if (spinner) {
+      spinner.fail(chalk.red(`  YouTube error: ${err.message}`))
+    } else {
+      tui.updateState({ title: `Error: ${err.message}`, artist: '' })
+      tui.render()
+    }
   }
 }
 
 import readline from 'readline'
-import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream } from './player.js'
+import { stopCurrentStream, pauseCurrentStream, resumeCurrentStream, toggleLoop, getIsLooping } from './player.js'
 
 export async function searchCommand(query) {
 
@@ -80,6 +85,7 @@ export async function searchCommand(query) {
   let currentQuery = query
   let nextQuery = null
   let userQueue = []
+  let history = []
 
   readline.emitKeypressEvents(process.stdin)
   if (process.stdin.isTTY) process.stdin.setRawMode(true)
@@ -124,7 +130,7 @@ export async function searchCommand(query) {
           } else {
             tui.updateState({ commandInput: undefined })
             nextQuery = val
-            stopCurrentStream()
+            stopCurrentStream(true)
           }
         } else {
           tui.updateState({ commandInput: undefined })
@@ -151,6 +157,19 @@ export async function searchCommand(query) {
       stopCurrentStream()
       tui.leaveAlternateScreen()
       process.exit(0)
+    } else if (key.name === 'n' || key.name === 'right') {
+      stopCurrentStream()
+    } else if (key.name === 'p' || key.name === 'left') {
+      if (!getIsLooping()) {
+        if (history.length > 0) {
+          userQueue.unshift(currentQuery)
+          nextQuery = history.pop()
+          tui.updateState({ userQueue: [...userQueue] })
+        } else {
+          nextQuery = currentQuery
+        }
+      }
+      stopCurrentStream()
     } else if (key.name === 's' || key.name === 'space') {
       if (isPaused) {
         resumeCurrentStream()
@@ -175,6 +194,8 @@ export async function searchCommand(query) {
     } else if (str === '-' || str === '_') {
       tui.decreaseSpeed()
       tui.render()
+    } else if (key.name === 'l') {
+      toggleLoop()
     } else if (str === '/' || key.name === '/') {
       isCommandMode = true
       commandBuffer = ''
@@ -195,9 +216,11 @@ export async function searchCommand(query) {
     await searchAndPlay(finalQuery, false)
 
     if (nextQuery) {
+      if (nextQuery !== currentQuery) history.push(currentQuery)
       currentQuery = nextQuery
       nextQuery = null
     } else if (userQueue.length > 0) {
+      history.push(currentQuery)
       currentQuery = userQueue.shift()
       tui.updateState({ userQueue: [...userQueue] })
     } else {

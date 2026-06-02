@@ -69,5 +69,9 @@ export function markSetupComplete() {
 }
 
 export function clearAll() {
-  config.clear()
+  config.delete('accessToken')
+  config.delete('refreshToken')
+  config.delete('tokenExpiry')
+  config.delete('spotifyUserId')
+  config.delete('displayName')
 }

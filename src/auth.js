@@ -7,7 +7,7 @@ import open from 'open'
 import 'dotenv/config'
 import {
   getTokens, saveTokens, saveUserInfo, clearAll,
-  isLoggedIn, getUserInfo, getAppCredentials
+  isLoggedIn, getUserInfo, getAppCredentials, isTokenExpired
 } from './config.js'
 import { checkSpotifyCredentials } from './setup.js'
 
@@ -151,17 +151,19 @@ export async function getAuthenticatedClient() {
   spotify.setAccessToken(accessToken)
   spotify.setRefreshToken(refreshToken)
 
-  // auto refresh if expired
-  try {
-    const data = await spotify.refreshAccessToken()
-    spotify.setAccessToken(data.body.access_token)
-    saveTokens({
-      accessToken:  data.body.access_token,
-      refreshToken: refreshToken,
-      expiresIn:    data.body.expires_in,
-    })
-  } catch {
-    // token still valid, continue
+  if (isTokenExpired()) {
+    try {
+      const data = await spotify.refreshAccessToken()
+      spotify.setAccessToken(data.body.access_token)
+      saveTokens({
+        accessToken:  data.body.access_token,
+        refreshToken: data.body.refresh_token || refreshToken,
+        expiresIn:    data.body.expires_in,
+      })
+    } catch (err) {
+      console.log(chalk.red(`\n  [Error] Failed to refresh token: ${err.message}. Please run "musync logout" and "musync auth" again.\n`))
+      process.exit(1)
+    }
   }
 
   return spotify

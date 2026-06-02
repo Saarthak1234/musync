@@ -31,10 +31,10 @@ program
   .action(listCommand)
 
 program
-  .command('play <playlist>')
+  .command('play <playlist...>')
   .description('Play a playlist by name or Spotify URL')
   .option('-s, --shuffle', 'Shuffle the playlist')
-  .action(playCommand)
+  .action((playlistArgs, options) => playCommand(playlistArgs.join(' '), options))
 
 program
   .command('search <query...>')

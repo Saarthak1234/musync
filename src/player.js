@@ -13,6 +13,8 @@ let elapsedTime = 0;
 let totalDuration = 0;
 let currentUrl = null;
 let resolvePlayPromise = null;
+let isLooping = false;
+let isSkipping = false;
 
 function formatTime(sec) {
   if (isNaN(sec) || !isFinite(sec)) return "0:00";
@@ -27,6 +29,11 @@ export function suspendProgressBar() {
 
 export function resumeProgressBar() {
   isProgressBarSuspended = false;
+}
+
+export function toggleLoop() {
+  isLooping = !isLooping;
+  tui.updateState({ isLooping });
 }
 
 function startFfplay(url, startTime) {
@@ -63,15 +70,12 @@ function startFfplay(url, startTime) {
       if (rmsMatch) {
         const rms = parseFloat(rmsMatch[1]);
         if (!isNaN(rms) && isFinite(rms)) {
-          // Normalize RMS (-60 is usually silent, 0 is max)
-          // We map it to an intensity 0.0 to 1.0, and apply an exponent to make beats pop
-          let intensity = (rms + 60) / 60;
-          intensity = Math.max(0, Math.min(1, intensity));
-          // Apply a power curve so loud sounds spike heavily, quiet sounds are low
-          const peakIntensity = Math.pow(intensity, 4);
-          tui.updateState({ audioIntensity: peakIntensity });
+           let intensity = (rms + 60) / 60;
+           intensity = Math.max(0, Math.min(1, intensity));
+           const peakIntensity = Math.pow(intensity, 4);
+           tui.updateState({ audioIntensity: peakIntensity });
         } else {
-          tui.updateState({ audioIntensity: 0 }); // -inf or silence
+           tui.updateState({ audioIntensity: 0 }); // -inf or silence
         }
       }
 
@@ -80,6 +84,9 @@ function startFfplay(url, startTime) {
       if (match && totalDuration > 0) {
         const currentSeconds = parseFloat(match[1]);
         if (!isNaN(currentSeconds)) {
+          // If we restarted for loop, elapsedTime resets to 0
+          if (currentSeconds < elapsedTime - 5) elapsedTime = 0; 
+          
           elapsedTime = Math.max(elapsedTime, currentSeconds);
           if (elapsedTime > totalDuration) elapsedTime = totalDuration;
 
@@ -95,13 +102,19 @@ function startFfplay(url, startTime) {
       }
     }
   });
-
   currentPlayer.on('close', (code) => {
     if (intentionallyPaused) {
       return; // We killed it just to pause
     }
     if (currentPlayer === currentPlayer) currentPlayer = null;
-    cleanupAndResolve();
+    
+    if (isLooping && !isSkipping) {
+      elapsedTime = 0;
+      startFfplay(currentUrl, 0);
+    } else {
+      isSkipping = false;
+      cleanupAndResolve();
+    }
   });
 
   currentPlayer.on('error', (err) => {
@@ -137,9 +150,19 @@ export function playStream(url, duration) {
   });
 }
 
-export function stopCurrentStream() {
+export function getIsLooping() {
+  return isLooping;
+}
+
+export function stopCurrentStream(forceSkip = false) {
   intentionallyPaused = false;
-  if (currentPlayer) currentPlayer.kill('SIGKILL');
+  isSkipping = forceSkip || !isLooping;
+  if (currentPlayer) {
+    currentPlayer.kill('SIGKILL');
+  } else {
+    isSkipping = false;
+    cleanupAndResolve();
+  }
 }
 
 export function pauseCurrentStream() {

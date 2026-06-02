@@ -221,7 +221,8 @@ export class TUI {
     // Track Info
     const pos = this.state.playlistPosition ? ` ${chalk.magenta(this.state.playlistPosition)}` : ''
     out.push(chalk.cyan(`  Currently Playing${pos}:`))
-    out.push(`  ${chalk.bold(this.state.title)} ${this.state.artist ? chalk.gray('— ' + this.state.artist) : ''}`)
+    const loopStr = this.state.isLooping ? chalk.bold.magenta(' [LOOP]') : ''
+    out.push(`  ${chalk.bold(this.state.title)} ${this.state.artist ? chalk.gray('— ' + this.state.artist) : ''}${loopStr}`)
     out.push('')
     
     // Progress Bar
@@ -428,9 +429,11 @@ export class TUI {
     out.push('')
     out.push(separator)
     if (this.state.commandInput !== undefined) {
-      out.push(chalk.bold.yellow('  Search or jump to track: ') + this.state.commandInput + chalk.bgWhite(' '))
+      out.push(chalk.bold.yellow('  Command Mode: ') + this.state.commandInput + chalk.bgWhite(' '))
+      out.push(chalk.gray('  [Text] Search & Play   [Number] Jump to Track   [+Text] Add to Queue   [-Text] Remove   [Esc] Cancel'))
     } else {
-      out.push(chalk.gray('  Controls: [Space] Pause  [n/p] Next/Prev  [c/v] Cat/Color  [+/-] Speed  [q] Quit  [/] Search'))
+      out.push(chalk.gray('  Basic: [Space] Pause  [n/p] Next/Prev  [l] Loop  [c/v] Visuals  [+/-] Speed  [q] Quit'))
+      out.push(chalk.gray('  Queue: Press [/] then type  [+Song] Add  [-Song] Remove  [Number] Jump  [Song] Search'))
     }
     out.push(separator)
     
