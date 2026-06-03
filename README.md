@@ -114,9 +114,9 @@ Once the player starts, you can control playback directly using your keyboard:
 - **Spacebar:** Pause or resume playback.
 - **n / p (or Left/Right Arrows):** Skip to the next or previous track.
 - **l:** Toggle Loop mode to continuously repeat the current song. (Note: Skips will restart the current song when loop is active).
-- **c:** Cycle through different ASCII animations (Musync Logo, Fire, Retro Equalizer, Cats, Developer Tools, Dynamic Track Title).
+- **c:** Cycle through different ASCII animations (Musync Logo, Fire, Retro Equalizer, Starfield, Oscilloscope, 3D Cube, Cats, Developer Tools, Dynamic Track Title).
 - **v:** Change the accent color of the ASCII animations.
-- **+ / -:** Adjust the baseline speed and intensity of the ASCII animations.
+- **+ / -:** Adjust the baseline speed and intensity of the ASCII animations (Speed Level 1-10).
 
 **Command Mode (Queue & Search):**
 Press `/` at any time during playback to open the command input prompt.

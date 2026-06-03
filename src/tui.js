@@ -14,6 +14,9 @@ const CAT_ANIMATIONS = {
   logo: [[]],
   fire: [[]],
   eq: [[]],
+  starfield: [[]],
+  oscilloscope: [[]],
+  cube: [[]],
   bop: [
     [
       "        ( meow... ) ",
@@ -190,14 +193,11 @@ export class TUI {
   render() {
     // Apply animation-specific default colors dynamically on transition
     if (this.animationType !== this.lastAnimationType) {
-      if (this.animationType === 'fire'){
-        this.colorIndex = 5 // Default to red
-        this.animationSpeed = 6
-      } 
-      if (this.animationType === 'eq'){
-        this.colorIndex = 3 // Default to green
-        this.animationSpeed = 9
-      }    
+      if (this.animationType === 'fire') { this.colorIndex = 5; this.animationSpeed = 6 }
+      else if (this.animationType === 'eq') { this.colorIndex = 3; this.animationSpeed = 9 }
+      else if (this.animationType === 'starfield') { this.colorIndex = 6; this.animationSpeed = 4 }
+      else if (this.animationType === 'oscilloscope') { this.colorIndex = 1; this.animationSpeed = 10 }
+      else if (this.animationType === 'cube') { this.colorIndex = 0; this.animationSpeed = 4 }
       this.lastAnimationType = this.animationType
     }
 
@@ -410,6 +410,75 @@ export class TUI {
         eqLines.push(line)
       }
       frames = [ eqLines ]
+    } else if (this.animationType === 'oscilloscope') {
+      const oscWidth = innerWidth
+      const oscHeight = 26
+      const audioPulse = (this.state.audioIntensity !== undefined) ? this.state.audioIntensity : 0
+      const manualIntensity = 1.0 - ((this.animationSpeed - 1) / 9.0)
+      const intensity = Math.min(1.0, audioPulse * (0.5 + manualIntensity * 1.5))
+      
+      this.oscPhase = (this.oscPhase || 0) + 0.3 + (intensity * 2)
+      const amp = (oscHeight / 2 - 2) * Math.max(0.1, intensity * 2)
+      const freq = 0.05 + intensity * 0.1
+      
+      const grid = Array.from({length: oscHeight}, () => new Array(oscWidth).fill(' '))
+      for (let x = 0; x < oscWidth; x++) {
+        const yFloat = Math.sin(x * freq + this.oscPhase) * amp + Math.cos(x * freq * 0.5 - this.oscPhase * 1.2) * (amp * 0.5)
+        const y = Math.floor(oscHeight / 2 + yFloat)
+        if (y >= 0 && y < oscHeight) {
+          grid[y][x] = '█'
+          if (y + 1 < oscHeight) grid[y+1][x] = '▄'
+        }
+      }
+      frames = [ grid.map(row => row.join('')) ]
+    } else if (this.animationType === 'starfield') {
+      const w = innerWidth
+      const h = 26
+      if (!this.stars || this.stars.length !== 100) {
+        this.stars = Array.from({length: 100}, () => ({ x: Math.random() * w, y: Math.random() * h, speed: Math.random() * 0.5 + 0.1 }))
+      }
+      const audioPulse = (this.state.audioIntensity !== undefined) ? this.state.audioIntensity : 0
+      const intensity = Math.min(1.0, audioPulse * 2.0)
+      
+      const grid = Array.from({length: h}, () => new Array(w).fill(' '))
+      this.stars.forEach(star => {
+        star.x += star.speed * (1 + intensity * 20)
+        if (star.x >= w) { star.x = 0; star.y = Math.random() * h }
+        const ix = Math.floor(star.x), iy = Math.floor(star.y)
+        if (ix >= 0 && ix < w && iy >= 0 && iy < h) {
+          grid[iy][ix] = intensity > 0.5 ? '-' : '.'
+        }
+      })
+      frames = [ grid.map(row => row.join('')) ]
+    } else if (this.animationType === 'cube') {
+      const w = innerWidth, h = 26
+      const audioPulse = (this.state.audioIntensity !== undefined) ? this.state.audioIntensity : 0
+      this.cubeRot = (this.cubeRot || 0) + 0.03 + audioPulse * 0.15
+      const scale = 8 + audioPulse * 4
+      const grid = Array.from({length: h}, () => new Array(w).fill(' '))
+      const verts = [[-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1], [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]]
+      const cos = Math.cos(this.cubeRot), sin = Math.sin(this.cubeRot)
+      const proj = verts.map(([x, y, z]) => {
+        let x1 = x * cos - z * sin, z1 = x * sin + z * cos
+        let y1 = y * cos - z1 * sin
+        return { x: Math.floor(w/2 + x1 * scale * 2), y: Math.floor(h/2 + y1 * scale) }
+      })
+      const drawLine = (p1, p2) => {
+        let x0 = p1.x, y0 = p1.y, x1 = p2.x, y1 = p2.y
+        let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1
+        let dy = Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1
+        let err = (dx > dy ? dx : -dy) / 2
+        while (true) {
+          if (x0 >= 0 && x0 < w && y0 >= 0 && y0 < h) grid[y0][x0] = '#'
+          if (x0 === x1 && y0 === y1) break
+          let e2 = err
+          if (e2 > -dx) { err -= dy; x0 += sx }
+          if (e2 < dy) { err += dx; y0 += sy }
+        }
+      }
+      const edges = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6], [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]]
+      edges.forEach(([i, j]) => drawLine(proj[i], proj[j]))
+      frames = [ grid.map(row => row.join('')) ]
     }
 
     const currentFrame = frames[this.frameIndex % frames.length] || []
@@ -432,7 +501,8 @@ export class TUI {
       out.push(chalk.bold.yellow('  Command Mode: ') + this.state.commandInput + chalk.bgWhite(' '))
       out.push(chalk.gray('  [Text] Search & Play   [Number] Jump to Track   [+Text] Add to Queue   [-Text] Remove   [Esc] Cancel'))
     } else {
-      out.push(chalk.gray('  Basic: [Space] Pause  [n/p] Next/Prev  [l] Loop  [c/v] Visuals  [+/-] Speed  [q] Quit'))
+      const displaySpeed = 11 - this.animationSpeed
+      out.push(chalk.gray(`  Basic: [Space] Pause  [n/p] Next/Prev  [l] Loop  [c/v] Visuals  [+/-] Speed (${displaySpeed})  [q] Quit`))
       out.push(chalk.gray('  Queue: Press [/] then type  [+Song] Add  [-Song] Remove  [Number] Jump  [Song] Search'))
     }
     out.push(separator)

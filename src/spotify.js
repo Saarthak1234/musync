@@ -32,9 +32,19 @@ export async function listCommand() {
   try {
     // Fetch directly from Spotify Web API instead of deprecated library methods
     const data = await fetchSpotifyAPI(spotify, '/v1/me/playlists?limit=50')
+    const likedData = await fetchSpotifyAPI(spotify, '/v1/me/tracks?limit=1').catch(() => null)
     spinner.stop()
 
-    const playlists = data.items
+    const playlists = []
+    if (likedData && likedData.total > 0) {
+      playlists.push({
+        id: 'liked_songs',
+        name: 'Liked Songs',
+        items: { total: likedData.total }
+      })
+    }
+    playlists.push(...data.items)
+
     if (!playlists.length) {
       console.log(chalk.yellow('\n  No playlists found.\n'))
       return
@@ -347,9 +357,15 @@ async function findPlaylistByName(spotify, name) {
   try {
     // Fetch directly from Spotify Web API instead of deprecated library methods
     const data = await fetchSpotifyAPI(spotify, '/v1/me/playlists?limit=50')
+    const likedData = await fetchSpotifyAPI(spotify, '/v1/me/tracks?limit=1').catch(() => null)
     spinner.stop()
 
-    const playlists = data.items
+    const playlists = []
+    if (likedData && likedData.total > 0) {
+      playlists.push({ id: 'liked_songs', name: 'Liked Songs' })
+    }
+    playlists.push(...data.items)
+
     const matches   = playlists.filter(pl =>
       pl.name.toLowerCase().includes(name.toLowerCase())
     )
@@ -380,13 +396,17 @@ async function findPlaylistByName(spotify, name) {
 async function getAllTracks(spotify, playlistId) {
   const tracks = []
   let offset   = 0
-  const limit  = 100 // Maximum allowed by Spotify API per request
+  const limit  = playlistId === 'liked_songs' ? 50 : 100 // Spotify API max limits
 
   while (true) {
-    // Fetch a single chunk of up to 100 tracks using the new /items endpoint
-    // Spotify API now uses 'item' instead of 'track' inside the items array
-    const fields = encodeURIComponent('items(item(name,artists,album,is_local)),next,total')
-    const url = `/v1/playlists/${playlistId}/items?limit=${limit}&offset=${offset}&fields=${fields}`
+    let url
+    if (playlistId === 'liked_songs') {
+      url = `/v1/me/tracks?limit=${limit}&offset=${offset}`
+    } else {
+      const fields = encodeURIComponent('items(item(name,artists,album,is_local)),next,total')
+      url = `/v1/playlists/${playlistId}/items?limit=${limit}&offset=${offset}&fields=${fields}`
+    }
+    
     const data = await fetchSpotifyAPI(spotify, url)
 
     const items = data.items
