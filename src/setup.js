@@ -318,13 +318,15 @@ export async function checkSpotifyCredentials() {
 
   const { clientId, clientSecret } = await inquirer.prompt([
     {
-      type: 'input',
+      type: 'password',
+      mask: '*',
       name: 'clientId',
       message: 'Paste your Client ID:',
       validate: i => i.length > 20 || 'Invalid Client ID'
     },
     {
-      type: 'input',
+      type: 'password',
+      mask: '*',
       name: 'clientSecret',
       message: 'Paste your Client Secret:',
       validate: i => i.length > 20 || 'Invalid Client Secret'
