@@ -138,7 +138,7 @@ musync dev-search "Rick Astley Never Gonna Give You Up"
 **Navigating Dev Mode:**
 - **Switch Windows:** You can click the top/bottom window with your mouse, or press `Ctrl + B` then `Up` or `Down` arrows.
 - **Send to Background:** Press `Ctrl + B` then `d` to detach. The UI disappears and your terminal returns to normal, but the music keeps playing in the background! Bring the UI back anytime by typing `tmux attach`.
-- **Exit Normal Way:** Click the bottom terminal and type `exit`. Click the top player and press `q`.
+- **Exit Normal Way:** Click the bottom terminal and type `exit` (or press `Ctrl + D`). Click the top player and press `q`.
 - **Force Kill:** Press `Ctrl + B` then `&`, and press `y` to confirm.
 
 **Initial Playlist Prompt:** 
