@@ -15,7 +15,7 @@ const OS = platform() // 'darwin', 'linux', 'win32'
 
 function isInstalled(cmd) {
   try {
-    execSync(`${cmd} --version`, { stdio: 'ignore' })
+    execSync(`command -v ${cmd}`, { stdio: 'ignore' })
     return true
   } catch {
     return false
