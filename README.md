@@ -122,9 +122,17 @@ musync view "My Awesome Playlist"
 
 ### 7. Developer Mode (Split-Screen Terminal)
 Want to run terminal commands while listening to music? Musync can automatically wrap your session in `tmux` to provide a flawless split-screen environment. The music plays on top, and your normal interactive shell (`bash`/`zsh`) runs perfectly at the bottom.
+
+**For Playlists:**
 ```bash
 musync dev "My Awesome Playlist"
 ```
+
+**For Single Songs:**
+```bash
+musync dev-search "Rick Astley Never Gonna Give You Up"
+```
+
 *(Note: Requires `tmux`. If not installed, Musync will attempt to auto-install it via `brew` or `apt`. This feature is natively supported on macOS and Linux. For Windows, you must run Musync inside WSL or Git Bash to use Dev Mode).*
 
 **Navigating Dev Mode:**

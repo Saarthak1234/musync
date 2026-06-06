@@ -96,4 +96,44 @@ program
     }
   })
 
+program
+  .command('dev-search <query...>')
+  .description('Launch Musync in Dev Mode and search a specific song')
+  .action(async (queryArgs) => {
+    try {
+      execSync('tmux -V', { stdio: 'ignore' })
+    } catch {
+      console.log(chalk.yellow('\n  [Notice] tmux is required for Dev Mode. Installing it now...\n'))
+      try {
+        await installTmux()
+      } catch (e) {
+        console.log(chalk.red('\n  [Error] Failed to install tmux automatically: ' + e.message + '\n'))
+        process.exit(1)
+      }
+    }
+
+    const query = queryArgs.join(' ')
+    
+    if (process.env.MUSYNC_DEV_SESSION) {
+      console.log(chalk.red('\n  [Error] Already running inside Musync Dev Mode!\n'))
+      process.exit(1)
+    }
+
+    const isNode = process.argv[0].includes('node')
+    const cmdStr = isNode 
+      ? `MUSYNC_DEV_SESSION=1 node "${process.argv[1]}" search "${query}"`
+      : `MUSYNC_DEV_SESSION=1 musync search "${query}"`
+    
+    const sessionName = `musync-dev-${Date.now()}`
+    
+    try {
+      execSync(`tmux new-session -d -s ${sessionName} '${cmdStr}'`)
+      execSync(`tmux set-option -t ${sessionName} mouse on`)
+      execSync(`tmux split-window -v -l 4 -t ${sessionName}`)
+      execSync(`tmux attach-session -t ${sessionName}`, { stdio: 'inherit' })
+    } catch (e) {
+      console.log(chalk.red('\n  [Error] Failed to start tmux session.\n'))
+    }
+  })
+
 program.parse()
