@@ -75,3 +75,7 @@ export function clearAll() {
   config.delete('spotifyUserId')
   config.delete('displayName')
 }
+
+export function hardReset() {
+  config.clear()
+}

@@ -6,6 +6,7 @@ import { checkFirstRun, installTmux } from '../src/setup.js'
 import { authCommand, logoutCommand } from '../src/auth.js'
 import { playCommand, listCommand, viewCommand } from '../src/spotify.js'
 import { searchCommand } from '../src/youtube.js'
+import { hardReset } from '../src/config.js'
 
 // run setup check on every command
 await checkFirstRun()
@@ -24,6 +25,15 @@ program
   .command('logout')
   .description('Log out and clear saved tokens')
   .action(logoutCommand)
+
+program
+  .command('reset')
+  .description('Wipe all credentials, secrets, and setup flags completely')
+  .action(() => {
+    hardReset()
+    console.log(chalk.green('\n  [Success] All credentials, Client IDs, and settings have been completely erased.'))
+    console.log(chalk.gray('  Run "musync play" to trigger the First-Run Wizard again.\n'))
+  })
 
 program
   .command('list')
