@@ -169,6 +169,38 @@ async function installFfmpeg(spinner) {
   }
 }
 
+export async function installTmux(spinner) {
+  switch (OS) {
+    case 'darwin':
+      if (isInstalled('brew')) {
+        if (spinner) spinner.stop()
+        execSync('brew install tmux', { stdio: 'inherit' })
+        if (spinner) spinner.start()
+      } else {
+        throw new Error('Please install Homebrew first (brew.sh) or install tmux manually.')
+      }
+      break
+
+    case 'linux':
+      if (spinner) spinner.stop()
+      try {
+        execSync('sudo apt-get install -y tmux', { stdio: 'inherit' })
+      } catch {
+        try {
+          execSync('sudo dnf install -y tmux', { stdio: 'inherit' })
+        } catch {
+          if (spinner) spinner.start()
+          throw new Error('Could not auto-install tmux. Please run: sudo apt install tmux')
+        }
+      }
+      if (spinner) spinner.start()
+      break
+
+    case 'win32':
+      throw new Error('tmux is not natively supported on Windows outside of WSL. Please use WSL or Git Bash.')
+  }
+}
+
 export async function checkFirstRun() {
   // Self-installer feature for standalone binaries on Mac/Linux
   const isStandalone = !process.execPath.endsWith('node') && !process.execPath.endsWith('node.exe')
@@ -206,6 +238,7 @@ export async function checkFirstRun() {
   const missing = []
   if (!isInstalled('yt-dlp'))          missing.push('yt-dlp')
   if (!isInstalled('ffplay') && !isInstalled('ffmpeg')) missing.push('ffmpeg')
+  if (!isInstalled('tmux') && OS !== 'win32') missing.push('tmux')
 
   if (missing.length === 0) {
     console.log(chalk.green('  [Success] All dependencies found!\n'))
@@ -233,6 +266,7 @@ export async function checkFirstRun() {
     try {
       if (dep === 'yt-dlp')  await installYtDlp(spinner)
       if (dep === 'ffmpeg')  await installFfmpeg(spinner)
+      if (dep === 'tmux')    await installTmux(spinner)
       spinner.succeed(chalk.green(`  ${dep} installed`))
     } catch (err) {
       spinner.fail(chalk.red(`  Failed to install ${dep}: ${err.message}`))
@@ -276,7 +310,7 @@ export async function checkSpotifyCredentials() {
   console.log(chalk.gray('  4.') + ' Fill in the form:');
   console.log(chalk.gray('     - App Name: ') + chalk.white('Musync CLI'));
   console.log(chalk.gray('     - App Description: ') + chalk.white('Local music player'));
-  console.log(chalk.gray('     - Redirect URI: ') + chalk.cyan.bold('http://127.0.0.1:8888') + chalk.red(' (IMPORTANT: You must click "Add" after typing this!)'));
+  console.log(chalk.gray('     - Redirect URI: ') + chalk.cyan.bold('http://127.0.0.1:8888/callback') + chalk.red(' (IMPORTANT: You must click "Add" after typing this!)'));
   console.log(chalk.gray('     - Which API is your app using?: ') + chalk.white('Check the box for "Web API"'));
   console.log(chalk.gray('  5.') + ' Scroll down, check the Terms of Service box, and click ' + chalk.bold('"Save"'));
   console.log(chalk.gray('  6.') + ' On the next page, click ' + chalk.bold('"Settings"') + ' (the gear icon near the top right).');

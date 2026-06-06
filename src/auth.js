@@ -94,8 +94,10 @@ export async function authCommand() {
     saveUserInfo({ id: me.body.id, displayName: me.body.display_name })
 
     spinner.succeed(chalk.green(`  Logged in as ${chalk.bold(me.body.display_name)} [Success]\n`))
+    process.exit(0)
   } catch (err) {
     spinner.fail(chalk.red(`  Auth failed: ${err.message}\n`))
+    process.exit(1)
   }
 }
 

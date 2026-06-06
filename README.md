@@ -86,7 +86,18 @@ musync search "Rick Astley Never Gonna Give You Up"
 ```
 
 ### 3. Authenticate with Spotify (For Private/Large Playlists)
-To fetch your private playlists by name or bypass the 100-track limit, log in.
+To fetch your private playlists by name or bypass the 100-track limit, you must connect your own Spotify Developer App.
+
+**How to get your credentials:**
+1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2. Log in with your Spotify account and click **Create app**.
+3. Fill in the required fields (App Name, Description).
+4. For **Redirect URI**, you MUST enter exactly: `http://127.0.0.1:8888/callback` (Make sure to click "Add").
+5. Check the box for "Web API", accept the terms, and click **Save**.
+6. On your app's dashboard, click **Settings**.
+7. Copy your **Client ID** and **Client Secret**.
+
+Run the following command to begin the interactive login process:
 ```bash
 musync auth
 ```
@@ -102,6 +113,25 @@ Start playing a specific playlist by name from your connected Spotify account.
 ```bash
 musync play "My Awesome Playlist"
 ```
+
+### 6. View All Tracks in a Playlist
+Want to just see what songs are inside a playlist before playing it? You can print out the entire tracklist!
+```bash
+musync view "My Awesome Playlist"
+```
+
+### 7. Developer Mode (Split-Screen Terminal)
+Want to run terminal commands while listening to music? Musync can automatically wrap your session in `tmux` to provide a flawless split-screen environment. The music plays on top, and your normal interactive shell (`bash`/`zsh`) runs perfectly at the bottom.
+```bash
+musync dev "My Awesome Playlist"
+```
+*(Note: Requires `tmux`. If not installed, Musync will attempt to auto-install it via `brew` or `apt`. This feature is natively supported on macOS and Linux. For Windows, you must run Musync inside WSL or Git Bash to use Dev Mode).*
+
+**Navigating Dev Mode:**
+- **Switch Windows:** You can click the top/bottom window with your mouse, or press `Ctrl + B` then `Up` or `Down` arrows.
+- **Send to Background:** Press `Ctrl + B` then `d` to detach. The UI disappears and your terminal returns to normal, but the music keeps playing in the background! Bring the UI back anytime by typing `tmux attach`.
+- **Exit Normal Way:** Click the bottom terminal and type `exit`. Click the top player and press `q`.
+- **Force Kill:** Press `Ctrl + B` then `&`, and press `y` to confirm.
 
 **Initial Playlist Prompt:** 
 When you run the play command for a playlist, you will see a list of all tracks. You can then:

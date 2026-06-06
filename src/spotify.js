@@ -67,6 +67,50 @@ export async function listCommand() {
   }
 }
 
+export async function viewCommand(playlistInput) {
+  let tracks = []
+  const spinner = ora('  Fetching tracks...').start()
+
+  try {
+    const urlMatch = playlistInput.match(/playlist\/([a-zA-Z0-9]+)/)
+    
+    if (urlMatch || playlistInput.startsWith('http')) {
+      const rawTracks = await getTracks(playlistInput)
+      tracks = rawTracks.map(t => ({
+        name: t.name,
+        artist: t.artists?.[0]?.name || t.artist || 'Unknown',
+        album: t.album?.name || ''
+      }))
+    } else {
+      spinner.stop()
+      const spotify = await getAuthenticatedClient()
+      spinner.start()
+      
+      const playlistId = await findPlaylistByName(spotify, playlistInput)
+      if (!playlistId) {
+        spinner.stop()
+        return
+      }
+      tracks = await getAllTracks(spotify, playlistId)
+    }
+
+    spinner.succeed(chalk.green(`  Found ${tracks.length} tracks`))
+    
+    if (!tracks.length) {
+      console.log(chalk.yellow('\n  Playlist is empty.\n'))
+      return
+    }
+
+    console.log(chalk.bold(`\n  Tracks in Playlist:\n`))
+    tracks.forEach((t, i) => {
+      console.log(chalk.gray(`  ${String(i + 1).padStart(3, ' ')}. `) + chalk.white(t.name) + chalk.gray(` — ${t.artist}`))
+    })
+    console.log()
+  } catch (err) {
+    spinner.fail(chalk.red(`  Error: ${err.message}\n`))
+  }
+}
+
 export async function playCommand(playlistInput, options) {
   let tracks = []
   const spinner = ora('  Fetching tracks...').start()
